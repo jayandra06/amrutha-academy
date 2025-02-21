@@ -93,7 +93,7 @@ abstract class CommonBaseState<P extends StatefulWidget, T extends BaseBloc<Base
   void handleException(AppException e) async {
     if (e.type == AppExceptionType.unauthorized) {
       // Handle unauthorized exception
-      navigator.displayDialog(AppDialogType.ok, message: e.message);
+      navigator.displayDialog(AppDialogType.ok, message: e.message, barrierDismissible: false);
       return;
     }
     if (e.type == AppExceptionType.unknown) {

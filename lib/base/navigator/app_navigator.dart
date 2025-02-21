@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 enum AppDialogType {
   confirm,
   ok,
@@ -12,5 +14,6 @@ abstract class AppNavigator {
     bool useSafeArea = false,
     String? title,
     required dynamic message,
+    Widget? icon,
   });
 }

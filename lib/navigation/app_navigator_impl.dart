@@ -29,17 +29,20 @@ class AppNavigatorImpl implements AppNavigator {
     bool useSafeArea = false,
     String? title,
     required dynamic message,
+        Widget? icon,
   }) {
     if (_isDialogAlreadyShown(type)) {
       return _dialogMaps[type]!.future as Future<T>;
     }
     _dialogMaps[type] = Completer<T?>();
     return AppDialogs.showPopup(
+      barrierDismissible: barrierDismissible,
       _appRouter.navigatorKey.currentContext!,
       builder: (_) {
         final child = CommonDialog(
           message: message,
           title: title,
+          icon: icon,
           onTap: () => Navigator.of(_appRouter.navigatorKey.currentContext!).pop(),
           singleButton: type == AppDialogType.ok,
           type: type,

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_colors.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_text_styles.dart';
@@ -60,7 +61,9 @@ class CommonDialog extends StatelessWidget {
               ),
         if(type != AppDialogType.none) ...[
           const Gap(32),
-          CommonButton(onPressed: () {}, title: confirmText ?? 'Ok', fullWidth: true, size: CommonButtonSize.small)
+          CommonButton(onPressed: () {
+            onTap?.call();
+          }, title: confirmText ?? 'Ok', fullWidth: true, size: CommonButtonSize.small)
         ],
       ],
     );

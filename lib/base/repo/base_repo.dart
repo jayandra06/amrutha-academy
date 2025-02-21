@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc_template/base/helper/duration_provider.dart';
@@ -24,7 +26,7 @@ abstract class BaseRepository {
       if (response.isSuccess()) {
         // saveResult?.call(response.data);
         final value = await compute(mapper, response);
-        if(saveResult != null) {
+        if (saveResult != null) {
           await Future.delayed(const LongDuration(), () {
             saveResult.call(value);
           });
@@ -33,7 +35,7 @@ abstract class BaseRepository {
       }
       return _handleApiError(response);
     } on DioException catch (e) {
-      return _handleDioException(e);
+      throw _handleDioException(e);
     } catch (e) {
       CoreLog.e(e);
       throw AppException('Something went wrong.', type: AppExceptionType.unknown);
@@ -47,7 +49,7 @@ abstract class BaseRepository {
   }
 
   @protected
-  Result<E> _handleDioException<E>(DioException e) {
+  AppException _handleDioException(DioException e) {
     var message = [e.type.name];
 
     if (e.response != null && e.response?.data != null) {
@@ -56,28 +58,28 @@ abstract class BaseRepository {
         message = MessageParser.parse(data['message']);
       }
     }
-
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
-        return Result.failure(AppException('Connection timeout.', type: AppExceptionType.connectionTimeout));
+        return AppException('Connection timeout.', type: AppExceptionType.connectionTimeout);
       case DioExceptionType.sendTimeout:
-        return Result.failure(AppException('Send timeout.', type: AppExceptionType.sendTimeout));
+        return AppException('Send timeout.', type: AppExceptionType.sendTimeout);
       case DioExceptionType.receiveTimeout:
-        return Result.failure(AppException('Receive timeout.', type: AppExceptionType.receiveTimeout));
+        return AppException('Receive timeout.', type: AppExceptionType.receiveTimeout);
       case DioExceptionType.badResponse:
-        return Result.failure(AppException(
-          'Server error: ${e.response?.statusCode}',
-          statusCode: e.response?.statusCode,
-          type: AppExceptionType.badResponse,
-        ));
+        final statusCode = e.response?.statusCode;
+        if (statusCode == HttpStatus.unauthorized || statusCode == HttpStatus.forbidden) {
+          return AppException(message.firstOrNull ?? '', type: AppExceptionType.unauthorized);
+        }
+        return AppException('Server error: ${e.response?.statusCode}',
+            statusCode: e.response?.statusCode, type: AppExceptionType.badResponse);
       case DioExceptionType.cancel:
-        return Result.failure(AppException('Request was canceled.', type: AppExceptionType.cancel));
+        return AppException('Request was canceled.', type: AppExceptionType.cancel);
       case DioExceptionType.connectionError:
-        return Result.failure(AppException('No internet connection.', type: AppExceptionType.connectionError));
+        return AppException('No internet connection.', type: AppExceptionType.connectionError);
       case DioExceptionType.unknown:
-        return Result.failure(AppException(message.first, type: AppExceptionType.unknown));
+        return AppException(message.first, type: AppExceptionType.unknown);
       default:
-        return Result.failure(AppException('Something went wrong.', type: AppExceptionType.other));
+        return AppException('Something went wrong.', type: AppExceptionType.other);
     }
   }
 

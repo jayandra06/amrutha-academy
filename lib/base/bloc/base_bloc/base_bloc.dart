@@ -35,9 +35,8 @@ abstract class BaseBloc<T extends BaseEvent, S extends BaseState> extends Bloc<T
     try {
       await onAction?.call();
     } catch (err) {
-      if (err is AppException) {
-        buildException(err);
-      }
+      if (err is AppException) buildException(err);
+
       if (handleError) onError?.call(err);
     } finally {
       if (handleLoading) hideLoading();
