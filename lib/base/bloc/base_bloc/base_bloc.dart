@@ -66,6 +66,6 @@ abstract class BaseBloc<T extends BaseEvent, S extends BaseState> extends Bloc<T
 
   @protected
   void buildException(AppException err) {
-    // _commonBloc.add(AddExceptionCommonEvent(exception: err));
+    _commonBloc.add(AddExceptionCommonEvent(exception: err));
   }
 }

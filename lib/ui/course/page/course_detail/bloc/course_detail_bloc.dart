@@ -11,21 +11,28 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../../domain/use_case/course/fetch_lesson_list_from_course_id_use_case.dart';
 import '../../../../../domain/use_case/course/fetch_review_list_from_course_id_use_case.dart';
+import '../../../../../domain/use_case/course/toggle_favourite_course_use_case.dart';
 
 @injectable
 final class CourseDetailBloc extends BaseBloc<CourseDetailEvent, CourseDetailState> {
-  CourseDetailBloc(this._fetchCourseDetailUseCase, this._fetchLessonListFromCourseIdUseCase, this._fetchReviewListFromCourseIdUseCase)
-      : super(CourseDetailState(
+  CourseDetailBloc(
+    this._fetchCourseDetailUseCase,
+    this._fetchLessonListFromCourseIdUseCase,
+    this._fetchReviewListFromCourseIdUseCase,
+    this._toggleFavouriteCourseUseCase,
+  ) : super(CourseDetailState(
           course: CourseEntity.defaultValue(),
           tab: CourseTab.about,
         )) {
     on<FetchCourseDetailEvent>(_onFetchCourseDetailEvent);
     on<CourseTabChangedEvent>(_onCourseTabChangedEvent);
+    on<ToggleFavoriteCourseEvent>(_onToggleFavoriteCourseEvent);
   }
 
   final FetchCourseDetailUseCase _fetchCourseDetailUseCase;
   final FetchLessonListFromCourseIdUseCase _fetchLessonListFromCourseIdUseCase;
   final FetchReviewListFromCourseIdUseCase _fetchReviewListFromCourseIdUseCase;
+  final ToggleFavouriteCourseUseCase _toggleFavouriteCourseUseCase;
 
   FutureOr<void> _onFetchCourseDetailEvent(FetchCourseDetailEvent event, Emitter<CourseDetailState> emit) {
     return runAction(
@@ -52,7 +59,7 @@ final class CourseDetailBloc extends BaseBloc<CourseDetailEvent, CourseDetailSta
   }
 
   Future<void> _fetchLesson({required Emitter<CourseDetailState> emit}) async {
-    if(state.lessons.isNotEmpty) return;
+    if (state.lessons.isNotEmpty) return;
     return runAction(
       onAction: () async {
         final result = await _fetchLessonListFromCourseIdUseCase.invoke(state.course.id);
@@ -66,7 +73,7 @@ final class CourseDetailBloc extends BaseBloc<CourseDetailEvent, CourseDetailSta
   }
 
   Future<void> _fetchReview({required Emitter<CourseDetailState> emit}) async {
-    if(state.reviews.isNotEmpty) return;
+    if (state.reviews.isNotEmpty) return;
     return runAction(
       onAction: () async {
         final result = await _fetchReviewListFromCourseIdUseCase.invoke(state.course.id);
@@ -77,5 +84,9 @@ final class CourseDetailBloc extends BaseBloc<CourseDetailEvent, CourseDetailSta
         );
       },
     );
+  }
+
+  FutureOr<void> _onToggleFavoriteCourseEvent(ToggleFavoriteCourseEvent event, Emitter<CourseDetailState> emit) {
+    _toggleFavouriteCourseUseCase.invoke(ToggleFavouriteCourseInput(id: state.course.id, isFav: false));
   }
 }

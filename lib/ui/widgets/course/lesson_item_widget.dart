@@ -8,16 +8,18 @@ import '../../../base/constants/ui/dimens.dart';
 import '../../../resource/generated/assets.gen.dart';
 
 class LessonItemWidget extends StatelessWidget {
-  const LessonItemWidget({super.key, required this.item, required this.index});
+  const LessonItemWidget({super.key, required this.item, required this.index, this.onTap});
 
   final LessonEntity item;
   final int index;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         if(!item.isFree) return;
+        onTap?.call();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: Dimens.paddingVertical, horizontal: 20),

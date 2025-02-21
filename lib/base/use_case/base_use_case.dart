@@ -1,3 +1,5 @@
+import 'package:flutter_bloc_template/base/exception/app_exception.dart';
+
 import '../helper/helper.dart';
 
 abstract class UseCase<T, P> {

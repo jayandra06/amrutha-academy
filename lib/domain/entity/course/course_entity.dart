@@ -17,6 +17,7 @@ class CourseEntity {
   final MentorEntity mentor;
   final List<ToolEntity> tools;
   final String about;
+  final bool isFavourite;
 
   CourseEntity({
     required this.id,
@@ -33,6 +34,7 @@ class CourseEntity {
     required this.mentor,
     required this.tools,
     required this.about,
+    required this.isFavourite,
   });
 
   static CourseEntity defaultValue() => CourseEntity(
@@ -50,6 +52,7 @@ class CourseEntity {
         mentor: MentorEntity.defaultValue(),
         tools: const [],
         about: '',
+        isFavourite: false,
       );
 
   String displayPrice() {

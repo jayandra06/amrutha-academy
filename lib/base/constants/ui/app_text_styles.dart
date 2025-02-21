@@ -64,4 +64,8 @@ extension CustomTextStyleExtension on TextStyle {
   TextStyle withPrimaryColor() {
     return copyWith(color: AppColors.current.primary500);
   }
+
+  TextStyle withWhiteColor() {
+    return copyWith(color: AppColors.current.otherWhite);
+  }
 }

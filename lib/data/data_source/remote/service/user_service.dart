@@ -13,6 +13,6 @@ abstract class UserService {
   @factoryMethod
   factory UserService(Dio dio) = _UserService;
 
-  @GET('/user')
+  @GET('/profile')
   Future<ApiResponse<UserResponseDto>> fetchProfile();
 }

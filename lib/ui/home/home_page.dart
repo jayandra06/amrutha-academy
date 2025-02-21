@@ -37,6 +37,7 @@ class _HomePageState extends CommonBaseState<HomePage, HomeBloc> {
   void initState() {
     super.initState();
     bloc.add(HomeDataRequestedEvent());
+    bloc.add(HomeProfileRequestEvent());
   }
 
   @override

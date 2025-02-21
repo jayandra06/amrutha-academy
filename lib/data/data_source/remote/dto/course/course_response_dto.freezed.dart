@@ -34,6 +34,7 @@ mixin _$CourseResponseDto {
   MentorResponseDto? get mentor => throw _privateConstructorUsedError;
   String? get about => throw _privateConstructorUsedError;
   List<ToolResponseDto>? get tools => throw _privateConstructorUsedError;
+  bool? get isFavourite => throw _privateConstructorUsedError;
 
   /// Serializes this CourseResponseDto to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -65,7 +66,8 @@ abstract class $CourseResponseDtoCopyWith<$Res> {
       bool? certificate,
       MentorResponseDto? mentor,
       String? about,
-      List<ToolResponseDto>? tools});
+      List<ToolResponseDto>? tools,
+      bool? isFavourite});
 
   $MentorResponseDtoCopyWith<$Res>? get mentor;
 }
@@ -99,6 +101,7 @@ class _$CourseResponseDtoCopyWithImpl<$Res, $Val extends CourseResponseDto>
     Object? mentor = freezed,
     Object? about = freezed,
     Object? tools = freezed,
+    Object? isFavourite = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -157,6 +160,10 @@ class _$CourseResponseDtoCopyWithImpl<$Res, $Val extends CourseResponseDto>
           ? _value.tools
           : tools // ignore: cast_nullable_to_non_nullable
               as List<ToolResponseDto>?,
+      isFavourite: freezed == isFavourite
+          ? _value.isFavourite
+          : isFavourite // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 
@@ -197,7 +204,8 @@ abstract class _$$CourseResponseDtoImplCopyWith<$Res>
       bool? certificate,
       MentorResponseDto? mentor,
       String? about,
-      List<ToolResponseDto>? tools});
+      List<ToolResponseDto>? tools,
+      bool? isFavourite});
 
   @override
   $MentorResponseDtoCopyWith<$Res>? get mentor;
@@ -230,6 +238,7 @@ class __$$CourseResponseDtoImplCopyWithImpl<$Res>
     Object? mentor = freezed,
     Object? about = freezed,
     Object? tools = freezed,
+    Object? isFavourite = freezed,
   }) {
     return _then(_$CourseResponseDtoImpl(
       id: freezed == id
@@ -288,6 +297,10 @@ class __$$CourseResponseDtoImplCopyWithImpl<$Res>
           ? _value._tools
           : tools // ignore: cast_nullable_to_non_nullable
               as List<ToolResponseDto>?,
+      isFavourite: freezed == isFavourite
+          ? _value.isFavourite
+          : isFavourite // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -309,7 +322,8 @@ class _$CourseResponseDtoImpl implements _CourseResponseDto {
       this.certificate,
       this.mentor,
       this.about,
-      final List<ToolResponseDto>? tools})
+      final List<ToolResponseDto>? tools,
+      this.isFavourite})
       : _tools = tools;
 
   factory _$CourseResponseDtoImpl.fromJson(Map<String, dynamic> json) =>
@@ -352,8 +366,11 @@ class _$CourseResponseDtoImpl implements _CourseResponseDto {
   }
 
   @override
+  final bool? isFavourite;
+
+  @override
   String toString() {
-    return 'CourseResponseDto(id: $id, title: $title, category: $category, image: $image, rating: $rating, reviewsCount: $reviewsCount, price: $price, originalPrice: $originalPrice, students: $students, duration: $duration, certificate: $certificate, mentor: $mentor, about: $about, tools: $tools)';
+    return 'CourseResponseDto(id: $id, title: $title, category: $category, image: $image, rating: $rating, reviewsCount: $reviewsCount, price: $price, originalPrice: $originalPrice, students: $students, duration: $duration, certificate: $certificate, mentor: $mentor, about: $about, tools: $tools, isFavourite: $isFavourite)';
   }
 
   @override
@@ -380,7 +397,9 @@ class _$CourseResponseDtoImpl implements _CourseResponseDto {
                 other.certificate == certificate) &&
             (identical(other.mentor, mentor) || other.mentor == mentor) &&
             (identical(other.about, about) || other.about == about) &&
-            const DeepCollectionEquality().equals(other._tools, _tools));
+            const DeepCollectionEquality().equals(other._tools, _tools) &&
+            (identical(other.isFavourite, isFavourite) ||
+                other.isFavourite == isFavourite));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -400,7 +419,8 @@ class _$CourseResponseDtoImpl implements _CourseResponseDto {
       certificate,
       mentor,
       about,
-      const DeepCollectionEquality().hash(_tools));
+      const DeepCollectionEquality().hash(_tools),
+      isFavourite);
 
   /// Create a copy of CourseResponseDto
   /// with the given fields replaced by the non-null parameter values.
@@ -434,7 +454,8 @@ abstract class _CourseResponseDto implements CourseResponseDto {
       final bool? certificate,
       final MentorResponseDto? mentor,
       final String? about,
-      final List<ToolResponseDto>? tools}) = _$CourseResponseDtoImpl;
+      final List<ToolResponseDto>? tools,
+      final bool? isFavourite}) = _$CourseResponseDtoImpl;
 
   factory _CourseResponseDto.fromJson(Map<String, dynamic> json) =
       _$CourseResponseDtoImpl.fromJson;
@@ -467,6 +488,8 @@ abstract class _CourseResponseDto implements CourseResponseDto {
   String? get about;
   @override
   List<ToolResponseDto>? get tools;
+  @override
+  bool? get isFavourite;
 
   /// Create a copy of CourseResponseDto
   /// with the given fields replaced by the non-null parameter values.

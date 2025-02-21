@@ -105,7 +105,7 @@ abstract final class AppDialogs {
         });
   }
 
-  static Future showPopup(
+  static Future<T?> showPopup<T extends Object?>(
     BuildContext context, {
     bool barrierDismissible = true,
     WidgetBuilder? builder,

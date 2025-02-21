@@ -28,12 +28,9 @@ class HomeSearchWidget extends StatelessWidget {
                 message: 'Your account is ready to use. You will be redirected to the Home page in a few seconds..',
               ));
         },
-        icon: InkWell(
-          onTap: () {},
-          child: CircleAvatar(
-            backgroundColor: Colors.transparent,
-            child: Assets.icons.filterLight.svg(colorFilter: ColorFilter.mode(AppColors.current.primary500, BlendMode.srcIn)),
-          ),
+        icon: CircleAvatar(
+          backgroundColor: Colors.transparent,
+          child: Assets.icons.filterLight.svg(colorFilter: ColorFilter.mode(AppColors.current.primary500, BlendMode.srcIn)),
         ),
       ),
     );

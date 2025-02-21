@@ -79,7 +79,7 @@ class CommonButton extends StatelessWidget {
         ),
       ),
     );
-    return fullWidth ? ConstrainedBox(constraints: BoxConstraints(minWidth: double.infinity), child: child) : child;
+    return fullWidth ? ConstrainedBox(constraints: const BoxConstraints(minWidth: double.infinity), child: child) : child;
   }
 
   Color _backgroundColor() {

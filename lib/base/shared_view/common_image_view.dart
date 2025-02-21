@@ -20,6 +20,10 @@ class CommonImageView extends StatelessWidget {
   final BoxFit fit;
   final double? radius;
 
+  factory CommonImageView.circle({required String imageUrl, double? size}) {
+    return CommonImageView(imageUrl: imageUrl, width: size, height: size, radius: 100);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(

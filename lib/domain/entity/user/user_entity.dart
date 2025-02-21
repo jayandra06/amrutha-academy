@@ -20,4 +20,18 @@ class UserEntity {
     required this.location,
     required this.role,
   });
+
+  static UserEntity defaultValue() {
+    return UserEntity(
+      id: '',
+      fullName: '',
+      email: '',
+      avatar: '',
+      bio: '',
+      phoneNumber: '',
+      birthday: DateTime.now(),
+      location: '',
+      role: '',
+    );
+  }
 }

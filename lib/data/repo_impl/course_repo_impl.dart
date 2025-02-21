@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc_template/base/helper/result.dart';
 import 'package:flutter_bloc_template/base/repo/base_repo.dart';
 import 'package:flutter_bloc_template/data/data_source/remote/service/course_service.dart';
@@ -15,6 +17,8 @@ import 'package:flutter_bloc_template/domain/entity/course/promote_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/review_entity.dart';
 import 'package:flutter_bloc_template/domain/repo/course_repo.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/fetch_course_detail_use_case.dart';
+import 'package:flutter_bloc_template/domain/use_case/course/toggle_favourite_course_use_case.dart';
+import 'package:flutter_bloc_template/domain/use_case/course/watch_favorite_course_stream_use_case.dart';
 import 'package:injectable/injectable.dart';
 
 @LazySingleton(as: CourseRepo)
@@ -22,6 +26,8 @@ class CourseRepoImpl extends BaseRepository implements CourseRepo {
   final CourseService _courseService;
 
   CourseRepoImpl(this._courseService);
+
+  final StreamController<WatchFavoriteCourseStreamOutput> _favouriteCourseStreamController = StreamController.broadcast();
 
   @override
   Future<Result<List<PromoteEntity>>> fetchPromotes() {
@@ -77,5 +83,16 @@ class CourseRepoImpl extends BaseRepository implements CourseRepo {
       _courseService.fetchReviewListFromCourseId(id),
       mapper: (resp) => resp?.data?.map(ReviewMapper.mapToEntity).toList() ?? [],
     );
+  }
+
+  @override
+  Stream<WatchFavoriteCourseStreamOutput> watchFavoriteCourseStream() {
+    return _favouriteCourseStreamController.stream;
+  }
+
+  @override
+  Future<Result<ToggleFavouriteCourseOutput>> toggleFavouriteCourse(ToggleFavouriteCourseInput input) async {
+    _favouriteCourseStreamController.add(WatchFavoriteCourseStreamOutput(id: input.id, isFav: !input.isFav));
+    return Result.ok(ToggleFavouriteCourseOutput());
   }
 }

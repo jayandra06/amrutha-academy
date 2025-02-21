@@ -27,6 +27,7 @@ _$CourseResponseDtoImpl _$$CourseResponseDtoImplFromJson(
       tools: (json['tools'] as List<dynamic>?)
           ?.map((e) => ToolResponseDto.fromJson(e as Map<String, dynamic>))
           .toList(),
+      isFavourite: json['isFavourite'] as bool?,
     );
 
 Map<String, dynamic> _$$CourseResponseDtoImplToJson(
@@ -46,6 +47,7 @@ Map<String, dynamic> _$$CourseResponseDtoImplToJson(
       'mentor': instance.mentor,
       'about': instance.about,
       'tools': instance.tools,
+      'isFavourite': instance.isFavourite,
     };
 
 _$ToolResponseDtoImpl _$$ToolResponseDtoImplFromJson(

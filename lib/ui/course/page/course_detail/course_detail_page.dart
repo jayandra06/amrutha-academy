@@ -89,7 +89,7 @@ class _CourseDetailPageState extends CommonBaseState<CourseDetailPage, CourseDet
                             scrolledUnderElevation: 0,
                             backgroundColor: AppColors.current.otherWhite,
                             title: AnimatedCrossFade(
-                                firstChild:  Text(state.course.title, style: AppTextStyles.h4Bold),
+                                firstChild: Text(state.course.title, style: AppTextStyles.h4Bold),
                                 secondChild: const SizedBox.shrink(),
                                 crossFadeState: !visible ? CrossFadeState.showSecond : CrossFadeState.showFirst,
                                 duration: const ShortDuration()),
@@ -160,7 +160,12 @@ class _CourseDetailPageState extends CommonBaseState<CourseDetailPage, CourseDet
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CourseInformationWidget(item: item),
+          CourseInformationWidget(
+            item: item,
+            onToggleFavorite: () {
+              bloc.add(ToggleFavoriteCourseEvent());
+            },
+          ),
           const Gap(Dimens.paddingVerticalLarge),
           Divider(height: 1, color: AppColors.current.greyscale200),
         ],

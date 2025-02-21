@@ -145,6 +145,14 @@ class $AssetsIconsGen {
   SvgGenImage get checkboxUnchecked =>
       const SvgGenImage('assets/icons/Checkbox-Unchecked.svg');
 
+  /// File path: assets/icons/Close-Square-Curved.svg
+  SvgGenImage get closeSquareCurved =>
+      const SvgGenImage('assets/icons/Close-Square-Curved.svg');
+
+  /// File path: assets/icons/Discovery-Bold.svg
+  SvgGenImage get discoveryBold =>
+      const SvgGenImage('assets/icons/Discovery-Bold.svg');
+
   /// File path: assets/icons/Document-Bold.svg
   SvgGenImage get documentBold =>
       const SvgGenImage('assets/icons/Document-Bold.svg');
@@ -164,8 +172,16 @@ class $AssetsIconsGen {
   SvgGenImage get filterLight =>
       const SvgGenImage('assets/icons/Filter-Light.svg');
 
+  /// File path: assets/icons/Fullscreen.svg
+  SvgGenImage get fullscreen =>
+      const SvgGenImage('assets/icons/Fullscreen.svg');
+
   /// File path: assets/icons/Heart-Bold.svg
   SvgGenImage get heartBold => const SvgGenImage('assets/icons/Heart-Bold.svg');
+
+  /// File path: assets/icons/Heart-Light.svg
+  SvgGenImage get heartLight =>
+      const SvgGenImage('assets/icons/Heart-Light.svg');
 
   /// File path: assets/icons/Hide.svg
   SvgGenImage get hide => const SvgGenImage('assets/icons/Hide.svg');
@@ -304,12 +320,16 @@ class $AssetsIconsGen {
         chat,
         checkboxChecked,
         checkboxUnchecked,
+        closeSquareCurved,
+        discoveryBold,
         documentBold,
         documentEnable,
         document,
         editSquare,
         filterLight,
+        fullscreen,
         heartBold,
+        heartLight,
         hide,
         homeEnable,
         home,
@@ -368,6 +388,10 @@ class $AssetsImagesGen {
   /// File path: assets/images/apple.png
   AssetGenImage get apple => const AssetGenImage('assets/images/apple.png');
 
+  /// File path: assets/images/empty-course.png
+  AssetGenImage get emptyCourse =>
+      const AssetGenImage('assets/images/empty-course.png');
+
   /// File path: assets/images/facebook.png
   AssetGenImage get facebook =>
       const AssetGenImage('assets/images/facebook.png');
@@ -391,6 +415,7 @@ class $AssetsImagesGen {
         frame3,
         logoName,
         apple,
+        emptyCourse,
         facebook,
         google,
         profilePopup,

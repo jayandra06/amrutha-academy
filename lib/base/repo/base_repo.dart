@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc_template/base/helper/duration_provider.dart';
 import 'package:flutter_bloc_template/base/helper/log.dart';
 
 import '../../data/data_source/remote/dto/api_response.dart';
@@ -9,25 +10,33 @@ import '../helper/result.dart';
 
 typedef ResponseToModelMapper<D, E> = E Function(D? resp);
 typedef EntityToModelMapper<E, M> = M Function(E? entity);
-typedef SaveResult<Data> = Function(Data? data);
+typedef SaveResult<E> = Function(E entity);
 
 abstract class BaseRepository {
   /// Handles API calls and maps the response to the required model.
-  Future<Result<Entity>> handleApiCall<Data, Entity>(
-    Future<ApiResponse<Data>> call, {
-    required ResponseToModelMapper<ApiResponse<Data>, Entity> mapper,
-    SaveResult<Data?>? saveResult,
+  Future<Result<E>> handleApiCall<D, E>(
+    Future<ApiResponse<D>> call, {
+    required ResponseToModelMapper<ApiResponse<D>, E> mapper,
+    SaveResult<E>? saveResult,
   }) async {
     try {
       final response = await call;
       if (response.isSuccess()) {
-        saveResult?.call(response.data);
+        // saveResult?.call(response.data);
         final value = await compute(mapper, response);
+        if(saveResult != null) {
+          await Future.delayed(const LongDuration(), () {
+            saveResult.call(value);
+          });
+        }
         return Result.ok(value);
       }
       return _handleApiError(response);
     } on DioException catch (e) {
       return _handleDioException(e);
+    } catch (e) {
+      CoreLog.e(e);
+      throw AppException('Something went wrong.', type: AppExceptionType.unknown);
     }
   }
 

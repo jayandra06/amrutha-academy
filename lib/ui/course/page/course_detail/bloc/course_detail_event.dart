@@ -45,11 +45,6 @@ final class SubmitCourseReviewEvent extends CourseDetailEvent {
 }
 
 final class ToggleFavoriteCourseEvent extends CourseDetailEvent {
-  final String courseId;
-  ToggleFavoriteCourseEvent({required this.courseId});
-
-  @override
-  List<Object?> get props => [courseId];
 }
 
 final class CourseTabChangedEvent extends CourseDetailEvent {

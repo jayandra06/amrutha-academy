@@ -40,7 +40,13 @@ import '../domain/use_case/course/fetch_promote_list_use_case.dart' as _i974;
 import '../domain/use_case/course/fetch_review_list_from_course_id_use_case.dart'
     as _i408;
 import '../domain/use_case/course/fetch_top_mentor_list_use_case.dart' as _i193;
+import '../domain/use_case/course/toggle_favourite_course_use_case.dart'
+    as _i954;
+import '../domain/use_case/course/watch_favorite_course_stream_use_case.dart'
+    as _i399;
 import '../domain/use_case/user/fetch_profile_use_case.dart' as _i79;
+import '../domain/use_case/user/listen_user_profile_stream_use_case.dart'
+    as _i360;
 import '../navigation/app_navigator_impl.dart' as _i285;
 import '../navigation/router.dart' as _i502;
 import '../ui/course/page/course_detail/bloc/course_detail_bloc.dart' as _i942;
@@ -92,33 +98,42 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i396.CourseRepoImpl(gh<_i417.CourseService>()));
     gh.factory<_i79.FetchProfileUseCase>(
         () => _i79.FetchProfileUseCase(gh<_i575.UserRepo>()));
+    gh.factory<_i360.ListenUserProfileStreamUseCase>(
+        () => _i360.ListenUserProfileStreamUseCase(gh<_i575.UserRepo>()));
     gh.factory<_i924.LoginUseCase>(
         () => _i924.LoginUseCase(gh<_i623.AuthRepo>()));
     gh.factory<_i974.FetchPromoteListUseCase>(
         () => _i974.FetchPromoteListUseCase(gh<_i492.CourseRepo>()));
+    gh.factory<_i954.ToggleFavouriteCourseUseCase>(
+        () => _i954.ToggleFavouriteCourseUseCase(gh<_i492.CourseRepo>()));
+    gh.factory<_i399.WatchFavoriteCourseStreamUseCase>(
+        () => _i399.WatchFavoriteCourseStreamUseCase(gh<_i492.CourseRepo>()));
     gh.factory<_i1026.FetchCategoryListUseCase>(
         () => _i1026.FetchCategoryListUseCase(gh<_i492.CourseRepo>()));
     gh.factory<_i280.FetchMostPopularCourseUseCase>(
         () => _i280.FetchMostPopularCourseUseCase(gh<_i492.CourseRepo>()));
+    gh.factory<_i408.FetchReviewListFromCourseIdUseCase>(
+        () => _i408.FetchReviewListFromCourseIdUseCase(gh<_i492.CourseRepo>()));
     gh.factory<_i430.FetchLessonListFromCourseIdUseCase>(
         () => _i430.FetchLessonListFromCourseIdUseCase(gh<_i492.CourseRepo>()));
     gh.factory<_i538.FetchCourseDetailUseCase>(
         () => _i538.FetchCourseDetailUseCase(gh<_i492.CourseRepo>()));
     gh.factory<_i193.FetchTopMentorListUseCase>(
         () => _i193.FetchTopMentorListUseCase(gh<_i492.CourseRepo>()));
-    gh.factory<_i408.FetchReviewListFromCourseIdUseCase>(
-        () => _i408.FetchReviewListFromCourseIdUseCase(gh<_i492.CourseRepo>()));
-    gh.factory<_i942.CourseDetailBloc>(() => _i942.CourseDetailBloc(
-          gh<_i538.FetchCourseDetailUseCase>(),
-          gh<_i430.FetchLessonListFromCourseIdUseCase>(),
-          gh<_i408.FetchReviewListFromCourseIdUseCase>(),
-        ));
     gh.factory<_i401.HomeBloc>(() => _i401.HomeBloc(
           gh<_i974.FetchPromoteListUseCase>(),
           gh<_i280.FetchMostPopularCourseUseCase>(),
           gh<_i193.FetchTopMentorListUseCase>(),
           gh<_i1026.FetchCategoryListUseCase>(),
           gh<_i79.FetchProfileUseCase>(),
+          gh<_i399.WatchFavoriteCourseStreamUseCase>(),
+          gh<_i954.ToggleFavouriteCourseUseCase>(),
+        ));
+    gh.factory<_i942.CourseDetailBloc>(() => _i942.CourseDetailBloc(
+          gh<_i538.FetchCourseDetailUseCase>(),
+          gh<_i430.FetchLessonListFromCourseIdUseCase>(),
+          gh<_i408.FetchReviewListFromCourseIdUseCase>(),
+          gh<_i954.ToggleFavouriteCourseUseCase>(),
         ));
     return this;
   }

@@ -20,6 +20,7 @@ class CourseResponseDto with _$CourseResponseDto {
     MentorResponseDto? mentor,
     String? about,
     List<ToolResponseDto>? tools,
+    bool? isFavourite,
   }) = _CourseResponseDto;
 
   factory CourseResponseDto.fromJson(Map<String, Object?> json) => _$CourseResponseDtoFromJson(json);

@@ -9,9 +9,10 @@ import 'package:flutter_bloc_template/ui/widgets/course/course_rating_widget.dar
 import 'package:gap/gap.dart';
 
 class CourseInformationWidget extends StatelessWidget {
-  const CourseInformationWidget({super.key, required this.item});
+  const CourseInformationWidget({super.key, required this.item, required this.onToggleFavorite});
 
   final CourseEntity item;
+  final VoidCallback onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +29,15 @@ class CourseInformationWidget extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             )),
             const Gap(12),
-            Assets.icons.bookmarkCurved.svg(
-                colorFilter: ColorFilter.mode(
-              AppColors.current.primary500,
-              BlendMode.srcIn,
-            )),
+            GestureDetector(
+              onTap: onToggleFavorite,
+              behavior: HitTestBehavior.opaque,
+              child: Assets.icons.bookmarkCurved.svg(
+                  colorFilter: ColorFilter.mode(
+                AppColors.current.primary500,
+                BlendMode.srcIn,
+              )),
+            ),
           ],
         ),
         const Gap(20),

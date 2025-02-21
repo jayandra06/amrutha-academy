@@ -4,6 +4,8 @@ import 'package:flutter_bloc_template/domain/entity/course/lesson_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/promote_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/review_entity.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/fetch_course_detail_use_case.dart';
+import 'package:flutter_bloc_template/domain/use_case/course/toggle_favourite_course_use_case.dart';
+import 'package:flutter_bloc_template/domain/use_case/course/watch_favorite_course_stream_use_case.dart';
 
 import '../../base/helper/result.dart';
 import '../entity/course/mentor_entity.dart';
@@ -22,4 +24,8 @@ abstract class CourseRepo {
   Future<Result<List<ReviewEntity>>> fetchReviewListFromCourseId(String id);
 
   Future<Result<CourseEntity>> fetchCourseDetail(CourseDetailRequest req);
+
+  Stream<WatchFavoriteCourseStreamOutput> watchFavoriteCourseStream();
+
+  Future<Result<ToggleFavouriteCourseOutput>> toggleFavouriteCourse(ToggleFavouriteCourseInput input);
 }

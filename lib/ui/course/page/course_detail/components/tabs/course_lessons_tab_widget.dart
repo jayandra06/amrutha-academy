@@ -1,9 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_colors.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_text_styles.dart';
 import 'package:flutter_bloc_template/domain/entity/course/course_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/lesson_entity.dart';
+import 'package:flutter_bloc_template/navigation/router.gr.dart';
 import 'package:flutter_bloc_template/ui/main/main_page.dart';
 import 'package:flutter_bloc_template/ui/widgets/course/lesson_item_widget.dart';
 import 'package:gap/gap.dart';
@@ -27,7 +29,14 @@ class CourseLessonsTabWidget extends StatelessWidget {
         separatorBuilder: (_, __) => const Gap(Dimens.paddingVerticalLarge),
         itemBuilder: (_, int index) {
           final item = lessons[index];
-          return LessonItemWidget(item: item, index: index);
+          return LessonItemWidget(
+            onTap: () {
+              AutoRouter.of(context)
+                  .push(LessonVideoPlayerRoute(videoUrl: 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'));
+            },
+            item: item,
+            index: index,
+          );
         },
       ),
     );

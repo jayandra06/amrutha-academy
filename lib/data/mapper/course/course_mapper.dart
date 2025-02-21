@@ -21,6 +21,7 @@ abstract final class CourseMapper {
       mentor: MentorMapper.mapToEntity(dto?.mentor),
       tools: dto?.tools?.map(ToolMapper.mapToEntity).toList() ?? [],
       about: dto?.about ?? '',
+      isFavourite: false,
     );
   }
 }

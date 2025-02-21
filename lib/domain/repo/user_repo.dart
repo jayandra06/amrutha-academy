@@ -4,4 +4,6 @@ import '../../base/helper/result.dart';
 
 abstract class UserRepo {
   Future<Result<UserEntity>> fetchProfile();
+
+  Stream<UserEntity> listenUserProfileStream();
 }
