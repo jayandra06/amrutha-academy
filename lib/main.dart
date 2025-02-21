@@ -17,6 +17,7 @@ import 'package:flutter_bloc_template/navigation/router.dart';
 import 'package:flutter_bloc_template/navigation/router.gr.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'base/bloc/app_bloc/app_event.dart';
 import 'base/shared_view/common_base_state.dart';
 import 'base/utils/http_utils.dart';
 import 'config/app_config.dart';
@@ -43,7 +44,9 @@ Future<void> initApp({
 
   runApp(
     MultiBlocProvider(
-      providers: dependencies.sharedProviders,
+      providers: [
+        BlocProvider.value(value: SL.get<AppBloc>()..add(AppStartedEvent(loadAppConfig))),
+      ],
       child: _MyApp(config: loadAppConfig),
     ),
   );
@@ -68,6 +71,12 @@ class _MyAppState extends CommonBaseState<_MyApp, AppBloc> {
 
   @override
   bool get shouldUseApplicationWidget => true;
+
+  @override
+  void initState() {
+    super.initState();
+    // bloc.add();
+  }
 
   @override
   Widget buildPage(BuildContext context) {

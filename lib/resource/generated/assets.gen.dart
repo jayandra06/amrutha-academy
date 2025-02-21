@@ -193,6 +193,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/Home.svg
   SvgGenImage get home => const SvgGenImage('assets/icons/Home.svg');
 
+  /// File path: assets/icons/Info-Circle-Bold.svg
+  SvgGenImage get infoCircleBold =>
+      const SvgGenImage('assets/icons/Info-Circle-Bold.svg');
+
   /// File path: assets/icons/Info-Square-Curved.svg
   SvgGenImage get infoSquareCurved =>
       const SvgGenImage('assets/icons/Info-Square-Curved.svg');
@@ -333,6 +337,7 @@ class $AssetsIconsGen {
         hide,
         homeEnable,
         home,
+        infoCircleBold,
         infoSquareCurved,
         lockCurved,
         lock,

@@ -4,13 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_template/base/constants/ui/dimens.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_base_state.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_scaffold.dart';
-import 'package:flutter_bloc_template/base/shared_view/common_text_field.dart';
-import 'package:flutter_bloc_template/base/shared_view/dialog/app_dialogs.dart';
-import 'package:flutter_bloc_template/domain/entity/course/course_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/mentor_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/promote_entity.dart';
 import 'package:flutter_bloc_template/navigation/router.gr.dart';
-import 'package:flutter_bloc_template/resource/generated/assets.gen.dart';
 import 'package:flutter_bloc_template/ui/home/bloc/home_state.dart';
 import 'package:flutter_bloc_template/ui/home/components/home_banner_slide_widget.dart';
 import 'package:flutter_bloc_template/ui/home/components/home_most_popular_courses_widget.dart';
@@ -37,7 +33,6 @@ class _HomePageState extends CommonBaseState<HomePage, HomeBloc> {
   void initState() {
     super.initState();
     bloc.add(HomeDataRequestedEvent());
-    bloc.add(HomeProfileRequestEvent());
   }
 
   @override

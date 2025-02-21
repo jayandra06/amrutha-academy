@@ -25,21 +25,16 @@ class HomeBloc extends BaseBloc<HomeEvent, HomeState> {
     this._fetchMostPopularCourseUseCase,
     this._fetchTopMentorListUseCase,
     this._fetchCategoryListUseCase,
-    this._fetchProfileUseCase,
-    this._watchFavoriteCourseStreamUseCase,
     this._toggleFavouriteCourseUseCase,
   ) : super(HomeState(categoryId: 'all')) {
     on<HomeDataRequestedEvent>(_onHomeDataRequestedEvent);
     on<HomeCategoryChangedEvent>(_onHomeCategoryChangedEvent);
-    on<HomeProfileRequestEvent>(_onHomeProfileRequestEvent);
   }
 
   final FetchPromoteListUseCase _fetchPromoteListUseCase;
   final FetchMostPopularCourseUseCase _fetchMostPopularCourseUseCase;
   final FetchTopMentorListUseCase _fetchTopMentorListUseCase;
   final FetchCategoryListUseCase _fetchCategoryListUseCase;
-  final FetchProfileUseCase _fetchProfileUseCase;
-  final WatchFavoriteCourseStreamUseCase _watchFavoriteCourseStreamUseCase;
   final ToggleFavouriteCourseUseCase _toggleFavouriteCourseUseCase;
 
   Future<void> _onHomeDataRequestedEvent(HomeDataRequestedEvent event, Emitter<HomeState> emit) async {
@@ -69,16 +64,5 @@ class HomeBloc extends BaseBloc<HomeEvent, HomeState> {
 
   FutureOr<void> _onHomeCategoryChangedEvent(HomeCategoryChangedEvent event, Emitter<HomeState> emit) {
     emit(state.copyWith(categoryId: event.id));
-  }
-
-  FutureOr<void> _onHomeProfileRequestEvent(HomeProfileRequestEvent event, Emitter<HomeState> emit) {
-    return runAction(
-      onAction: () async {
-        await _fetchProfileUseCase.invoke(null);
-      },
-      handleLoading: false,
-      onError: (e) {
-      }
-    );
   }
 }

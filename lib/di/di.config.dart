@@ -71,7 +71,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i919.LoginBloc>(() => _i919.LoginBloc());
     gh.factory<_i839.LoadAppConfigUseCase>(() => _i839.LoadAppConfigUseCase());
     gh.factory<_i92.LogoutUseCase>(() => _i92.LogoutUseCase());
-    gh.singleton<_i334.AppBloc>(() => _i334.AppBloc());
     gh.lazySingleton<_i502.AppRouter>(() => _i502.AppRouter());
     gh.lazySingleton<_i417.CourseService>(
         () => _i417.CourseService(gh<_i361.Dio>()));
@@ -120,13 +119,13 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i538.FetchCourseDetailUseCase(gh<_i492.CourseRepo>()));
     gh.factory<_i193.FetchTopMentorListUseCase>(
         () => _i193.FetchTopMentorListUseCase(gh<_i492.CourseRepo>()));
+    gh.singleton<_i334.AppBloc>(
+        () => _i334.AppBloc(gh<_i79.FetchProfileUseCase>()));
     gh.factory<_i401.HomeBloc>(() => _i401.HomeBloc(
           gh<_i974.FetchPromoteListUseCase>(),
           gh<_i280.FetchMostPopularCourseUseCase>(),
           gh<_i193.FetchTopMentorListUseCase>(),
           gh<_i1026.FetchCategoryListUseCase>(),
-          gh<_i79.FetchProfileUseCase>(),
-          gh<_i399.WatchFavoriteCourseStreamUseCase>(),
           gh<_i954.ToggleFavouriteCourseUseCase>(),
         ));
     gh.factory<_i942.CourseDetailBloc>(() => _i942.CourseDetailBloc(

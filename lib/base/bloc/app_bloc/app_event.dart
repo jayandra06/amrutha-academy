@@ -1,11 +1,16 @@
 import 'package:flutter_bloc_template/base/bloc/base_bloc/base_event.dart';
+import 'package:flutter_bloc_template/domain/entity/config/load_app_config_entity.dart';
 
 sealed class AppEvent extends BaseEvent {
   @override
   List<Object?> get props => [];
 }
 
-final class AppStartedEvent extends AppEvent {}
+final class AppStartedEvent extends AppEvent {
+  final LoadAppConfigEntity loadAppConfig;
+
+  AppStartedEvent(this.loadAppConfig);
+}
 
 final class UserLoggedInEvent extends AppEvent {
   final String userId;
