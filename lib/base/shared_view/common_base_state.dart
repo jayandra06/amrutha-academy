@@ -1,5 +1,7 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_template/navigation/router.gr.dart';
 import 'package:provider/provider.dart';
 
 import '../../di/di.dart';
@@ -92,8 +94,33 @@ abstract class CommonBaseState<P extends StatefulWidget, T extends BaseBloc<Base
 
   void handleException(AppException e) async {
     if (e.type == AppExceptionType.unauthorized) {
-      // Handle unauthorized exception
-      navigator.displayDialog(AppDialogType.ok, message: e.message, barrierDismissible: false);
+      navigator
+          .displayDialog(
+        AppDialogType.ok,
+        message: e.message,
+        barrierDismissible: false,
+        icon: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xff5F82FF),
+                  Color(0xff335EF7),
+                ],
+              )),
+          child: Assets.icons.infoCircleBold.svg(
+              colorFilter: ColorFilter.mode(
+            AppColors.current.otherWhite,
+            BlendMode.srcIn,
+          )),
+        ),
+      )
+          .then(
+        (_) {
+          AutoRouter.of(context).replaceAll([const LetInRoute()]);
+        },
+      );
       return;
     }
     if (e.type == AppExceptionType.unknown) {

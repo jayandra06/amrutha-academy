@@ -48,7 +48,7 @@ class HomeMostPopularCoursesWidget extends StatelessWidget {
         ),
         Container(
           margin: const EdgeInsets.only(top: 5),
-          color: const Color(0xffF9F9F9),
+          color: AppColors.current.scaffoldColor,
           padding: const EdgeInsets.symmetric(horizontal: Dimens.paddingHorizontal).copyWith(top: 20),
           child: _items(context),
         ),

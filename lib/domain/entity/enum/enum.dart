@@ -81,13 +81,37 @@ enum RatingFilter {
   final int code;
 
   String fromTitle() {
-    return switch(this) {
+    return switch (this) {
       RatingFilter.all => 'All',
       RatingFilter.fiveStars => '5',
       RatingFilter.fourStars => '4',
       RatingFilter.threeStars => '3',
       RatingFilter.twoStars => '2',
       RatingFilter.oneStars => '1',
+    };
+  }
+}
+
+enum MyCourseTab {
+  onGoing,
+  completed;
+
+  String fromTitle() {
+    return switch (this) {
+      MyCourseTab.onGoing => 'OnGoing',
+      MyCourseTab.completed => 'Completed',
+    };
+  }
+}
+
+enum InboxTab {
+  chat,
+  call;
+
+  String fromTitle() {
+    return switch (this) {
+      InboxTab.chat => 'Chats',
+      InboxTab.call => 'Calls',
     };
   }
 }

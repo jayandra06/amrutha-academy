@@ -48,6 +48,10 @@ class AppColors {
   final Color otherWhite;
 
   final LinearGradient gradientBlue;
+  final LinearGradient gradientYellow;
+  final LinearGradient gradientGreen;
+  final LinearGradient gradientOrange;
+  final LinearGradient gradientRed;
 
   final Color scaffoldColor;
 
@@ -93,8 +97,12 @@ class AppColors {
     required this.transparentYellow,
     required this.transparentCyan,
     required this.otherWhite,
-    required this.gradientBlue,
     required this.scaffoldColor,
+    required this.gradientBlue,
+    required this.gradientGreen,
+    required this.gradientOrange,
+    required this.gradientYellow,
+    required this.gradientRed,
   });
 
   static AppColors of(BuildContext context) {
@@ -145,13 +153,22 @@ class AppColors {
         transparentYellow: const Color(0xffFACC15).withOpacity(.08),
         transparentCyan: const Color(0xff335EF7).withOpacity(.08),
         otherWhite: const Color(0xffFFFFFF),
-        gradientBlue: const LinearGradient(
-          colors: [
-            Color(0xff5F82FF),
-            Color(0xff335EF7),
-          ],
-        ),
         scaffoldColor: const Color(0xffF9F9F9),
+        gradientBlue: const LinearGradient(
+          colors: [Color(0xff5F82FF), Color(0xff335EF7)],
+        ),
+        gradientGreen: const LinearGradient(
+          colors: [Color(0xff35DEBC), Color(0xff22BB9C)],
+        ),
+        gradientOrange: const LinearGradient(
+          colors: [Color(0xffFFAB38), Color(0xffFB9400)],
+        ),
+        gradientYellow: const LinearGradient(
+          colors: [Color(0xffFFE580), Color(0xffFACC15)],
+        ),
+        gradientRed: const LinearGradient(
+          colors: [Color(0xffFF8A9B), Color(0xffFF4D67)],
+        ),
       );
 }
 
