@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_template/base/bloc/base_bloc/base_bloc.dart';
+import 'package:flutter_bloc_template/base/bloc/load_status.dart';
+import 'package:flutter_bloc_template/base/helper/checker.dart';
 import 'package:flutter_bloc_template/base/helper/duration_provider.dart';
-import 'package:flutter_bloc_template/base/helper/result.dart';
-import 'package:flutter_bloc_template/domain/entity/course/search_history_entity.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/fetch_search_history_list_use_case.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/fetch_search_suggestion_list_use_case.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/bloc/home_search_event.dart';
@@ -24,6 +24,8 @@ class HomeSearchBloc extends BaseBloc<HomeSearchEvent, HomeSearchState> {
       _onHomeSearchKeywordChangedEvent,
       transformer: debounceTransformer(const VeryLongDuration()),
     );
+    on<HomeSearchStatusChangedEvent>(_onHomeSearchStatusChangedEvent);
+    on<SubmitHomeSearchEvent>(_onSubmitHomeSearchEvent);
   }
 
   final FetchSearchSuggestionListUseCase _fetchSearchSuggestionListUseCase;
@@ -43,5 +45,32 @@ class HomeSearchBloc extends BaseBloc<HomeSearchEvent, HomeSearchState> {
     );
   }
 
-  FutureOr<void> _onHomeSearchKeywordChangedEvent(HomeSearchKeywordChangedEvent event, Emitter<HomeSearchState> emit) {}
+  FutureOr<void> _onHomeSearchKeywordChangedEvent(HomeSearchKeywordChangedEvent event, Emitter<HomeSearchState> emit) {
+    return runAction(
+      onAction: () async {
+        emit(state.copyWith(status: LoadStatus.loading));
+        final result = await _fetchSearchSuggestionListUseCase.invoke(null);
+        result.when(
+          ok: (data) {
+            emit(state.copyWith(suggestions: data, isTyping: !empty(event.keyword), keyword: event.keyword));
+          },
+        );
+        event.completer.complete(LoadStatus.success);
+      },
+      handleLoading: false,
+    );
+  }
+
+  FutureOr<void> _onHomeSearchStatusChangedEvent(HomeSearchStatusChangedEvent event, Emitter<HomeSearchState> emit) {
+    emit(state.copyWith(status: event.status));
+  }
+
+  FutureOr<void> _onSubmitHomeSearchEvent(SubmitHomeSearchEvent event, Emitter<HomeSearchState> emit) async {
+    return runAction(
+      onAction: () async {
+        await Future.delayed(const Duration(seconds: 2));
+        emit(state.copyWith(keyword: event.keyword, isTyping: false));
+      },
+    );
+  }
 }

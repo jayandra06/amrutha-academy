@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_template/base/helper/log.dart';
 import 'package:rxdart/rxdart.dart';
 
 import '../../exception/app_exception.dart';
@@ -38,6 +39,7 @@ abstract class BaseBloc<T extends BaseEvent, S extends BaseState> extends Bloc<T
       if (err is AppException) buildException(err);
 
       if (handleError) onError?.call(err);
+      CoreLog.e('[onError]: $err');
     } finally {
       if (handleLoading) hideLoading();
       onComplete?.call();

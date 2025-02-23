@@ -115,3 +115,15 @@ enum InboxTab {
     };
   }
 }
+
+enum SearchResultTab {
+  course,
+  mentor;
+
+  String fromTitle() {
+    return switch (this) {
+      SearchResultTab.course => 'Course',
+      SearchResultTab.mentor => 'Mentor',
+    };
+  }
+}

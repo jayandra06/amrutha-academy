@@ -7,10 +7,11 @@ import '../../../base/shared_view/dialog/common_dialog.dart';
 import '../../../resource/generated/assets.gen.dart';
 
 class HomeSearchWidget extends StatelessWidget {
-  const HomeSearchWidget({super.key, required this.onChanged, this.autoFocus = false});
+  const HomeSearchWidget({super.key, required this.onChanged, this.autoFocus = false, this.controller});
 
   final ValueChanged<String> onChanged;
   final bool autoFocus;
+  final TextEditingController? controller;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +20,7 @@ class HomeSearchWidget extends StatelessWidget {
       autoFocus: autoFocus,
       prefixIconPath: Assets.icons.searchLight.path,
       hintText: 'Search',
+      controller: controller,
       suffixIcon: IconButton(
         onPressed: () {
           AppDialogs.showPopup(context,

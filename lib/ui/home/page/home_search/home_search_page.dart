@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:auto_route/annotations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc_template/base/bloc/load_status.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_colors.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_text_styles.dart';
 import 'package:flutter_bloc_template/base/constants/ui/dimens.dart';
+import 'package:flutter_bloc_template/base/extension/context_extension.dart';
+import 'package:flutter_bloc_template/base/helper/duration_provider.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_app_bar.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_scaffold.dart';
 import 'package:flutter_bloc_template/domain/entity/course/search_history_entity.dart';
@@ -12,9 +17,13 @@ import 'package:flutter_bloc_template/ui/home/components/home_search_widget.dart
 import 'package:flutter_bloc_template/ui/home/page/home_search/bloc/home_search_bloc.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/bloc/home_search_event.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/bloc/home_search_state.dart';
+import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_history_list_widget.dart';
+import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_result_list_widget.dart';
+import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_suggestion_list_widget.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../base/shared_view/common_base_state.dart';
+import '../../../../base/shared_view/common_circle_loading.dart';
 
 @RoutePage()
 class HomeSearchPage extends StatefulWidget {
@@ -25,6 +34,8 @@ class HomeSearchPage extends StatefulWidget {
 }
 
 class _HomeSearchPageState extends CommonBaseState<HomeSearchPage, HomeSearchBloc> {
+  final TextEditingController _editingController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -39,12 +50,28 @@ class _HomeSearchPageState extends CommonBaseState<HomeSearchPage, HomeSearchBlo
         padding: const EdgeInsets.all(Dimens.paddingVerticalLarge).copyWith(top: 0),
         child: BlocBuilder<HomeSearchBloc, HomeSearchState>(
           builder: (context, state) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (state.histories.isNotEmpty) Expanded(child: buildHistoryList(state.histories)),
-              ],
-            );
+            if (state.status.isLoading) {
+              return const CommonCircleLoading();
+            }
+            if (!state.isTyping && state.isSubmit) {
+              return HomeSearchResultListWidget(
+                keyword: state.keyword,
+                total: 0,
+              );
+            }
+            if (state.isTyping) {
+              return HomeSearchSuggestionListWidget(
+                onTap: _didTapValue,
+                suggestions: state.suggestions,
+              );
+            }
+            if (!state.isTyping && state.histories.isNotEmpty) {
+              return HomeSearchHistoryListWidget(
+                histories: state.histories,
+                onTap: _didTapValue,
+              );
+            }
+            return const SizedBox.shrink();
           },
         ),
       ),
@@ -55,43 +82,22 @@ class _HomeSearchPageState extends CommonBaseState<HomeSearchPage, HomeSearchBlo
     return CommonAppBar(
       text: HomeSearchWidget(
         autoFocus: true,
-        onChanged: (String value) => bloc.add(HomeSearchKeywordChangedEvent(keyword: value.trim())),
+        controller: _editingController,
+        onChanged: (String value) async {
+          final completer = Completer<LoadStatus>();
+          bloc.add(HomeSearchKeywordChangedEvent(keyword: value.trim(), completer: completer));
+          final result = await completer.future;
+          bloc.add(HomeSearchStatusChangedEvent(status: result));
+        },
       ),
       titleType: AppBarTitle.widget,
       height: 100,
     );
   }
 
-  Widget buildHistoryList(List<SearchHistoryEntity> histories) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Recent', style: AppTextStyles.h5Bold),
-        const Gap(Dimens.paddingVerticalLarge),
-        Divider(height: 1, color: AppColors.current.greyscale200),
-        const Gap(Dimens.paddingVerticalLarge),
-        Expanded(
-            child: ListView.separated(
-          physics: const ClampingScrollPhysics(),
-          separatorBuilder: (_, __) => const Gap(Dimens.paddingVerticalLarge),
-          itemCount: histories.length,
-          itemBuilder: (context, index) {
-            final item = histories[index];
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  item.keyword,
-                  style: AppTextStyles.bodyXLargeMedium.copyWith(color: AppColors.current.greyscale600),
-                ),
-                const Gap(12),
-                Assets.icons.closeSquareCurved.svg(),
-              ],
-            );
-          },
-        ))
-      ],
-    );
+  void _didTapValue(String value) {
+    context.hideKeyboard();
+    _editingController.text = value;
+    bloc.add(SubmitHomeSearchEvent(keyword: value));
   }
 }
