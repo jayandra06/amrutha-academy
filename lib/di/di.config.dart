@@ -39,6 +39,10 @@ import '../domain/use_case/course/fetch_most_popular_course_use_case.dart'
 import '../domain/use_case/course/fetch_promote_list_use_case.dart' as _i974;
 import '../domain/use_case/course/fetch_review_list_from_course_id_use_case.dart'
     as _i408;
+import '../domain/use_case/course/fetch_search_history_list_use_case.dart'
+    as _i141;
+import '../domain/use_case/course/fetch_search_suggestion_list_use_case.dart'
+    as _i627;
 import '../domain/use_case/course/fetch_top_mentor_list_use_case.dart' as _i193;
 import '../domain/use_case/course/toggle_favourite_course_use_case.dart'
     as _i954;
@@ -66,7 +70,6 @@ extension GetItInjectableX on _i174.GetIt {
       environment,
       environmentFilter,
     );
-    gh.factory<_i702.HomeSearchBloc>(() => _i702.HomeSearchBloc());
     gh.factory<_i792.CourseListBloc>(() => _i792.CourseListBloc());
     gh.factory<_i919.LoginBloc>(() => _i919.LoginBloc());
     gh.factory<_i839.LoadAppConfigUseCase>(() => _i839.LoadAppConfigUseCase());
@@ -119,6 +122,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i538.FetchCourseDetailUseCase(gh<_i492.CourseRepo>()));
     gh.factory<_i193.FetchTopMentorListUseCase>(
         () => _i193.FetchTopMentorListUseCase(gh<_i492.CourseRepo>()));
+    gh.factory<_i627.FetchSearchSuggestionListUseCase>(
+        () => _i627.FetchSearchSuggestionListUseCase(gh<_i492.CourseRepo>()));
+    gh.factory<_i141.FetchSearchHistoryListUseCase>(
+        () => _i141.FetchSearchHistoryListUseCase(gh<_i492.CourseRepo>()));
+    gh.factory<_i702.HomeSearchBloc>(() => _i702.HomeSearchBloc(
+          gh<_i627.FetchSearchSuggestionListUseCase>(),
+          gh<_i141.FetchSearchHistoryListUseCase>(),
+        ));
     gh.singleton<_i334.AppBloc>(
         () => _i334.AppBloc(gh<_i79.FetchProfileUseCase>()));
     gh.factory<_i401.HomeBloc>(() => _i401.HomeBloc(

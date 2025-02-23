@@ -253,6 +253,10 @@ class $AssetsIconsGen {
   SvgGenImage get radioUnselected =>
       const SvgGenImage('assets/icons/Radio-Unselected.svg');
 
+  /// File path: assets/icons/Search-Light-2.svg
+  SvgGenImage get searchLight2 =>
+      const SvgGenImage('assets/icons/Search-Light-2.svg');
+
   /// File path: assets/icons/Search-Light.svg
   SvgGenImage get searchLight =>
       const SvgGenImage('assets/icons/Search-Light.svg');
@@ -353,6 +357,7 @@ class $AssetsIconsGen {
         profile,
         radioSelected,
         radioUnselected,
+        searchLight2,
         searchLight,
         shieldDoneCurved,
         showCurved,

@@ -9,12 +9,14 @@ import 'package:flutter_bloc_template/data/mapper/course/lesson_mapper.dart';
 import 'package:flutter_bloc_template/data/mapper/course/mentor_mapper.dart';
 import 'package:flutter_bloc_template/data/mapper/course/promote_mapper.dart';
 import 'package:flutter_bloc_template/data/mapper/course/review_mapper.dart';
+import 'package:flutter_bloc_template/data/mapper/course/search_history_mapper.dart';
 import 'package:flutter_bloc_template/domain/entity/course/category_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/course_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/lesson_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/mentor_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/promote_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/review_entity.dart';
+import 'package:flutter_bloc_template/domain/entity/course/search_history_entity.dart';
 import 'package:flutter_bloc_template/domain/repo/course_repo.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/fetch_course_detail_use_case.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/toggle_favourite_course_use_case.dart';
@@ -94,5 +96,18 @@ class CourseRepoImpl extends BaseRepository implements CourseRepo {
   Future<Result<ToggleFavouriteCourseOutput>> toggleFavouriteCourse(ToggleFavouriteCourseInput input) async {
     _favouriteCourseStreamController.add(WatchFavoriteCourseStreamOutput(id: input.id, isFav: !input.isFav));
     return Result.ok(ToggleFavouriteCourseOutput());
+  }
+
+  @override
+  Future<Result<List<SearchHistoryEntity>>> fetchSearchHistories() {
+    return handleApiCall(
+      _courseService.fetchSearchHistory(),
+      mapper: (resp) => resp?.data?.map<SearchHistoryEntity>(SearchHistoryMapper.mapToEntity).toList() ?? [],
+    );
+  }
+
+  @override
+  Future<Result<List<String>>> fetchSearchSuggestions() {
+    return handleApiCall(_courseService.fetchSearchSuggestion(), mapper: (resp) => resp?.data ?? []);
   }
 }

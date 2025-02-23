@@ -6,3 +6,14 @@ sealed class HomeSearchEvent extends BaseEvent {
 }
 
 final class HomeSearchDataRequestEvent extends HomeSearchEvent {}
+
+final class HomeSearchKeywordChangedEvent extends HomeSearchEvent {
+  final String keyword;
+
+  HomeSearchKeywordChangedEvent({required this.keyword});
+
+  @override
+  List<Object?> get props => [
+        keyword,
+      ];
+}

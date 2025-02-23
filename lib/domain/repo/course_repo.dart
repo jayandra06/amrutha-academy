@@ -3,6 +3,7 @@ import 'package:flutter_bloc_template/domain/entity/course/course_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/lesson_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/promote_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/review_entity.dart';
+import 'package:flutter_bloc_template/domain/entity/course/search_history_entity.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/fetch_course_detail_use_case.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/toggle_favourite_course_use_case.dart';
 import 'package:flutter_bloc_template/domain/use_case/course/watch_favorite_course_stream_use_case.dart';
@@ -28,4 +29,8 @@ abstract class CourseRepo {
   Stream<WatchFavoriteCourseStreamOutput> watchFavoriteCourseStream();
 
   Future<Result<ToggleFavouriteCourseOutput>> toggleFavouriteCourse(ToggleFavouriteCourseInput input);
+
+  Future<Result<List<String>>> fetchSearchSuggestions();
+
+  Future<Result<List<SearchHistoryEntity>>> fetchSearchHistories();
 }
