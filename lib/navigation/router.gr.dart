@@ -164,12 +164,14 @@ class LessonVideoPlayerRoute
   LessonVideoPlayerRoute({
     _i17.Key? key,
     required String videoUrl,
+    String? title,
     List<_i16.PageRouteInfo>? children,
   }) : super(
           LessonVideoPlayerRoute.name,
           args: LessonVideoPlayerRouteArgs(
             key: key,
             videoUrl: videoUrl,
+            title: title,
           ),
           initialChildren: children,
         );
@@ -183,6 +185,7 @@ class LessonVideoPlayerRoute
       return _i6.LessonVideoPlayerPage(
         key: args.key,
         videoUrl: args.videoUrl,
+        title: args.title,
       );
     },
   );
@@ -192,15 +195,18 @@ class LessonVideoPlayerRouteArgs {
   const LessonVideoPlayerRouteArgs({
     this.key,
     required this.videoUrl,
+    this.title,
   });
 
   final _i17.Key? key;
 
   final String videoUrl;
 
+  final String? title;
+
   @override
   String toString() {
-    return 'LessonVideoPlayerRouteArgs{key: $key, videoUrl: $videoUrl}';
+    return 'LessonVideoPlayerRouteArgs{key: $key, videoUrl: $videoUrl, title: $title}';
   }
 }
 

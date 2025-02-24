@@ -31,8 +31,10 @@ class CourseLessonsTabWidget extends StatelessWidget {
           final item = lessons[index];
           return LessonItemWidget(
             onTap: () {
-              AutoRouter.of(context)
-                  .push(LessonVideoPlayerRoute(videoUrl: 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4'));
+              AutoRouter.of(context).push(LessonVideoPlayerRoute(
+                videoUrl: 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+                title: item.title,
+              ));
             },
             item: item,
             index: index,

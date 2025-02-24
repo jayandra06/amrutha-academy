@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_text_styles.dart';
 import 'package:flutter_bloc_template/base/constants/ui/dimens.dart';
 import 'package:flutter_bloc_template/base/extension/duration_extension.dart';
+import 'package:flutter_bloc_template/base/helper/checker.dart';
 import 'package:gap/gap.dart';
 import 'package:video_player/video_player.dart';
 
@@ -16,8 +17,9 @@ import '../../../../resource/generated/assets.gen.dart';
 @RoutePage()
 class LessonVideoPlayerPage extends StatefulWidget {
   final String videoUrl;
+  final String? title;
 
-  const LessonVideoPlayerPage({super.key, required this.videoUrl});
+  const LessonVideoPlayerPage({super.key, required this.videoUrl, this.title});
 
   @override
   State<LessonVideoPlayerPage> createState() => _LessonVideoPlayerPageState();
@@ -28,7 +30,6 @@ class _LessonVideoPlayerPageState extends State<LessonVideoPlayerPage> {
   bool _showOverlay = true;
   bool _isFullscreen = false;
   Timer? _hideControlsTimer;
-
 
   @override
   void initState() {
@@ -127,6 +128,26 @@ class _LessonVideoPlayerPageState extends State<LessonVideoPlayerPage> {
                 ],
               ),
             ),
+          if (_showOverlay && _isFullscreen && !empty(widget.title))
+            Positioned(
+                top: 34,
+                left: 100,
+                right: 100,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Assets.icons.arrowDownLight2.svg(colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn), width: 32),
+                    const Gap(12),
+                    Flexible(
+                      child: Text(
+                        widget.title!,
+                        style: AppTextStyles.h3Bold.withWhiteColor(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                )),
           if (_showOverlay)
             Center(
               child: GestureDetector(
