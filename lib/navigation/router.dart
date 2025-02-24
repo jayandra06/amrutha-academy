@@ -29,6 +29,9 @@ class AppRouter extends RootStackRouter {
         AutoRoute(page: CourseListRoute.page),
         AutoRoute(page: CourseDetailRoute.page),
         AutoRoute(page: LessonVideoPlayerRoute.page),
+
+        // Profile
+        AutoRoute(page: EditProfileRoute.page),
       ];
 
   @override

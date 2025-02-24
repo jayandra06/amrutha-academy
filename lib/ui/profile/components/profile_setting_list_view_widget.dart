@@ -1,5 +1,7 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_text_styles.dart';
+import 'package:flutter_bloc_template/navigation/router.gr.dart';
 import 'package:flutter_bloc_template/resource/generated/assets.gen.dart';
 import 'package:gap/gap.dart';
 
@@ -13,7 +15,13 @@ class ProfileSettingListViewWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _item(onTap: () {}, label: 'Edit Profile', icon: Assets.icons.profileCurved.svg()),
+        _item(
+          onTap: () {
+            AutoRouter.of(context).push(const EditProfileRoute());
+          },
+          label: 'Edit Profile',
+          icon: Assets.icons.profileCurved.svg(),
+        ),
         _item(onTap: () {}, label: 'Notification', icon: Assets.icons.notificationCurved.svg()),
         _item(onTap: () {}, label: 'Payment', icon: Assets.icons.walletCurved.svg()),
         _item(onTap: () {}, label: 'Security', icon: Assets.icons.shieldDoneCurved.svg()),
@@ -79,21 +87,25 @@ class ProfileSettingListViewWidget extends StatelessWidget {
     TextStyle? labelStyle,
     // bool visibleBorderBottom = true,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              icon,
-              const Gap(20),
-              Text(label, style: labelStyle ?? AppTextStyles.bodyXLargeBold),
-            ],
-          ),
-          trailing ?? Assets.icons.arrowRight2.svg(width: 20, height: 20),
-        ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                icon,
+                const Gap(20),
+                Text(label, style: labelStyle ?? AppTextStyles.bodyXLargeBold),
+              ],
+            ),
+            trailing ?? Assets.icons.arrowRight2.svg(width: 20, height: 20),
+          ],
+        ),
       ),
     );
   }

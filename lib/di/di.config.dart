@@ -58,6 +58,7 @@ import '../ui/course/page/course_list/bloc/course_list_bloc.dart' as _i792;
 import '../ui/home/bloc/home_bloc.dart' as _i401;
 import '../ui/home/page/home_search/bloc/home_search_bloc.dart' as _i702;
 import '../ui/login/bloc/login_bloc.dart' as _i919;
+import '../ui/profile/pages/edit_profile/bloc/edit_profile_bloc.dart' as _i90;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -130,6 +131,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i627.FetchSearchSuggestionListUseCase>(),
           gh<_i141.FetchSearchHistoryListUseCase>(),
         ));
+    gh.factory<_i90.EditProfileBloc>(
+        () => _i90.EditProfileBloc(gh<_i79.FetchProfileUseCase>()));
     gh.singleton<_i334.AppBloc>(
         () => _i334.AppBloc(gh<_i79.FetchProfileUseCase>()));
     gh.factory<_i401.HomeBloc>(() => _i401.HomeBloc(

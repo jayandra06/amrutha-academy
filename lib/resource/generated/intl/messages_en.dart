@@ -33,6 +33,7 @@ class MessageLookup extends MessageLookupByLibrary {
             MessageLookupByLibrary.simpleMessage("Create your\nAccount"),
         "dont_have_an_account":
             MessageLookupByLibrary.simpleMessage("Don\'t have an account?"),
+        "edit_profile": MessageLookupByLibrary.simpleMessage("Edit Profile"),
         "email": MessageLookupByLibrary.simpleMessage("Email"),
         "facebook": MessageLookupByLibrary.simpleMessage("Facebook"),
         "forgot_the_password":

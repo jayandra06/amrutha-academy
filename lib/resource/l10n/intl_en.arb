@@ -30,5 +30,6 @@
     "transaction": "Transaction",
     "profile": "Profile",
     "collapse": "Collapse",
-    "read_more": "Read more"
+    "read_more": "Read more",
+    "edit_profile": "Edit Profile"
 }

@@ -11,7 +11,7 @@ class CommonTextField extends StatefulWidget {
     this.label,
     this.hintText,
     this.errorText,
-    required this.onChanged,
+    this.onChanged,
     this.keyboardType,
     this.isRequired = false,
     this.obscureText = false,
@@ -26,13 +26,15 @@ class CommonTextField extends StatefulWidget {
     this.counterText = '',
     this.innerLabel = false,
     this.autoFocus = false,
+    this.readOnly = false,
     this.inputFormatters,
+    this.onTap,
   });
 
   final String? label;
   final String? hintText;
   final String? errorText;
-  final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onChanged;
   final TextInputType? keyboardType;
   final bool isRequired;
   final bool obscureText;
@@ -47,7 +49,9 @@ class CommonTextField extends StatefulWidget {
   final String counterText;
   final bool innerLabel;
   final bool autoFocus;
+  final bool readOnly;
   final List<TextInputFormatter>? inputFormatters;
+  final VoidCallback? onTap;
 
   @override
   State<CommonTextField> createState() => _CommonTextFieldState();
@@ -90,6 +94,8 @@ class _CommonTextFieldState extends State<CommonTextField> {
             valueListenable: visibleNotifier,
             builder: (_, visible, __) {
               return TextFormField(
+                onTap: widget.onTap,
+                readOnly: widget.readOnly,
                 focusNode: focusNode,
                 inputFormatters: widget.inputFormatters,
                 autofocus: widget.autoFocus,
