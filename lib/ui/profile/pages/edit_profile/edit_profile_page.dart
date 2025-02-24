@@ -90,9 +90,7 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
                       ],
                     );
                   },
-                ).then((_) {
-                  context.hideKeyboard();
-                });
+                );
               },
               behavior: HitTestBehavior.opaque,
               child: IgnorePointer(

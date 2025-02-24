@@ -32,6 +32,8 @@ class AppRouter extends RootStackRouter {
 
         // Profile
         AutoRoute(page: EditProfileRoute.page),
+        AutoRoute(page: SettingLanguageRoute.page),
+        AutoRoute(page: SettingNotificationRoute.page),
       ];
 
   @override

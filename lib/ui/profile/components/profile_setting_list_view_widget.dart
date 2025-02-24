@@ -22,11 +22,11 @@ class ProfileSettingListViewWidget extends StatelessWidget {
           label: 'Edit Profile',
           icon: Assets.icons.profileCurved.svg(),
         ),
-        _item(onTap: () {}, label: 'Notification', icon: Assets.icons.notificationCurved.svg()),
+        _item(onTap: () => AutoRouter.of(context).push(const SettingNotificationRoute()), label: 'Notification', icon: Assets.icons.notificationCurved.svg()),
         _item(onTap: () {}, label: 'Payment', icon: Assets.icons.walletCurved.svg()),
         _item(onTap: () {}, label: 'Security', icon: Assets.icons.shieldDoneCurved.svg()),
         _item(
-          onTap: () {},
+          onTap: () => AutoRouter.of(context).push(const SettingNotificationRoute()),
           label: 'Language',
           icon: Assets.icons.moreCircleCurved.svg(),
           trailing: Row(

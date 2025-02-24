@@ -59,6 +59,8 @@ import '../ui/home/bloc/home_bloc.dart' as _i401;
 import '../ui/home/page/home_search/bloc/home_search_bloc.dart' as _i702;
 import '../ui/login/bloc/login_bloc.dart' as _i919;
 import '../ui/profile/pages/edit_profile/bloc/edit_profile_bloc.dart' as _i90;
+import '../ui/profile/pages/setting_notification/bloc/setting_notification_bloc.dart'
+    as _i494;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -75,6 +77,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i919.LoginBloc>(() => _i919.LoginBloc());
     gh.factory<_i839.LoadAppConfigUseCase>(() => _i839.LoadAppConfigUseCase());
     gh.factory<_i92.LogoutUseCase>(() => _i92.LogoutUseCase());
+    gh.factory<_i494.SettingNotificationBloc>(
+        () => _i494.SettingNotificationBloc());
     gh.lazySingleton<_i502.AppRouter>(() => _i502.AppRouter());
     gh.lazySingleton<_i417.CourseService>(
         () => _i417.CourseService(gh<_i361.Dio>()));
