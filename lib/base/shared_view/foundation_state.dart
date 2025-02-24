@@ -18,7 +18,7 @@ import '../navigator/app_navigator.dart';
 
 enum LoadingType { circle, line }
 
-abstract class CommonBaseState<P extends StatefulWidget, T extends BaseBloc<BaseEvent, BaseState>> extends State<P> {
+abstract class FoundationState<P extends StatefulWidget, T extends BaseBloc<BaseEvent, BaseState>> extends State<P> {
   late final AppNavigator navigator = SL.get<AppNavigator>();
   late final CommonBloc commonBloc = SL.get<CommonBloc>();
   late final T bloc = SL.get<T>()

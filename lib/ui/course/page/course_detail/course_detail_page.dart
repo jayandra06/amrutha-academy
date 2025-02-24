@@ -7,7 +7,7 @@ import 'package:flutter_bloc_template/base/constants/ui/app_colors.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_text_styles.dart';
 import 'package:flutter_bloc_template/base/constants/ui/dimens.dart';
 import 'package:flutter_bloc_template/base/helper/duration_provider.dart';
-import 'package:flutter_bloc_template/base/shared_view/common_base_state.dart';
+import 'package:flutter_bloc_template/base/shared_view/foundation_state.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_bottom_navigator_bar_background.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_button.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_image_view.dart';
@@ -38,7 +38,7 @@ class CourseDetailPage extends StatefulWidget {
   State<CourseDetailPage> createState() => _CourseDetailPageState();
 }
 
-class _CourseDetailPageState extends CommonBaseState<CourseDetailPage, CourseDetailBloc> {
+class _CourseDetailPageState extends FoundationState<CourseDetailPage, CourseDetailBloc> {
   final ScrollController _scrollController = ScrollController();
 
   final ValueNotifier<bool> isHeaderVisible = ValueNotifier(false);

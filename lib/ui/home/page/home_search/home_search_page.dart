@@ -22,7 +22,7 @@ import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_s
 import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_suggestion_list_widget.dart';
 import 'package:gap/gap.dart';
 
-import '../../../../base/shared_view/common_base_state.dart';
+import '../../../../base/shared_view/foundation_state.dart';
 import '../../../../base/shared_view/common_circle_loading.dart';
 
 @RoutePage()
@@ -33,7 +33,7 @@ class HomeSearchPage extends StatefulWidget {
   State<HomeSearchPage> createState() => _HomeSearchPageState();
 }
 
-class _HomeSearchPageState extends CommonBaseState<HomeSearchPage, HomeSearchBloc> {
+class _HomeSearchPageState extends FoundationState<HomeSearchPage, HomeSearchBloc> {
   final TextEditingController _editingController = TextEditingController();
 
   @override

@@ -8,7 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_template/base/bloc/app_bloc/app_bloc.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_theme.dart';
 import 'package:flutter_bloc_template/base/helper/log.dart';
-import 'package:flutter_bloc_template/config/dependencies.dart' as dependencies;
 import 'package:flutter_bloc_template/config/environment.dart';
 import 'package:flutter_bloc_template/di/di.dart';
 import 'package:flutter_bloc_template/domain/entity/config/load_app_config_entity.dart';
@@ -18,7 +17,7 @@ import 'package:flutter_bloc_template/navigation/router.gr.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'base/bloc/app_bloc/app_event.dart';
-import 'base/shared_view/common_base_state.dart';
+import 'base/shared_view/foundation_state.dart';
 import 'base/utils/http_utils.dart';
 import 'config/app_config.dart';
 import 'navigation/app_router_observer.dart';
@@ -66,17 +65,11 @@ class _MyApp extends StatefulWidget {
   State<_MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends CommonBaseState<_MyApp, AppBloc> {
+class _MyAppState extends FoundationState<_MyApp, AppBloc> {
   late final appRouter = SL.get<AppRouter>();
 
   @override
   bool get shouldUseApplicationWidget => true;
-
-  @override
-  void initState() {
-    super.initState();
-    // bloc.add();
-  }
 
   @override
   Widget buildPage(BuildContext context) {

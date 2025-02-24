@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_template/base/constants/ui/dimens.dart';
-import 'package:flutter_bloc_template/base/shared_view/common_base_state.dart';
+import 'package:flutter_bloc_template/base/shared_view/foundation_state.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_scaffold.dart';
 import 'package:flutter_bloc_template/domain/entity/course/mentor_entity.dart';
 import 'package:flutter_bloc_template/domain/entity/course/promote_entity.dart';
@@ -28,7 +28,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends CommonBaseState<HomePage, HomeBloc> {
+class _HomePageState extends FoundationState<HomePage, HomeBloc> {
   @override
   void initState() {
     super.initState();

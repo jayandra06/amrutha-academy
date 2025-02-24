@@ -1,7 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_colors.dart';
-import 'package:flutter_bloc_template/base/shared_view/common_base_state.dart';
+import 'package:flutter_bloc_template/base/shared_view/foundation_state.dart';
 import 'package:flutter_bloc_template/base/shared_view/dialog/app_dialogs.dart';
 import 'package:flutter_bloc_template/navigation/router.gr.dart';
 import 'package:gap/gap.dart';
@@ -28,7 +28,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends CommonBaseState<LoginPage, LoginBloc> {
+class _LoginPageState extends FoundationState<LoginPage, LoginBloc> {
   @override
   Widget buildPage(BuildContext context) {
     return CommonScaffold(
