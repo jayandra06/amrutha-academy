@@ -12,7 +12,9 @@ class CommonButton extends StatelessWidget {
     this.size = CommonButtonSize.medium,
     this.enable = true,
     this.fullWidth = false,
+    this.visibleShadow = true,
     this.backgroundColor,
+    this.titleColor,
   });
 
   final String title;
@@ -20,7 +22,9 @@ class CommonButton extends StatelessWidget {
   final CommonButtonSize size;
   final bool enable;
   final bool fullWidth;
+  final bool visibleShadow;
   final Color? backgroundColor;
+  final Color? titleColor;
 
   // factory CommonButton.small({
   //   required String title,
@@ -53,16 +57,21 @@ class CommonButton extends StatelessWidget {
     final child = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(100),
-        boxShadow: !enable ? null : [
-          BoxShadow(
-            offset: const Offset(4, 8),
-            blurRadius: 24,
-            color: AppColors.current.primary500.withOpacity(.25),
-          ),
-        ],
+        boxShadow: !visibleShadow
+            ? null
+            : [
+                BoxShadow(
+                  offset: const Offset(4, 8),
+                  blurRadius: 24,
+                  color: AppColors.current.primary500.withOpacity(.25),
+                ),
+              ],
       ),
       child: TextButton(
-        onPressed: onPressed,
+        onPressed: () {
+          if (!enable) return;
+          onPressed.call();
+        },
         style: TextButton.styleFrom(
           backgroundColor: _backgroundColor(),
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
@@ -83,12 +92,12 @@ class CommonButton extends StatelessWidget {
   }
 
   Color _backgroundColor() {
-    if (!enable) return AppColors.current.disableButton;
+    if (!enable || !visibleShadow) return backgroundColor ?? AppColors.current.disableButton;
     return backgroundColor ?? AppColors.current.primary500;
   }
 
   Color _getTitleColor() {
-    return AppColors.current.otherWhite;
+    return titleColor ?? AppColors.current.otherWhite;
     // if (enable) return AppColors.current.otherWhite;
     // return AppColors.current.primary500;
   }

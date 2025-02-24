@@ -11,12 +11,14 @@ import 'package:flutter_bloc_template/base/extension/context_extension.dart';
 import 'package:flutter_bloc_template/base/helper/duration_provider.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_app_bar.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_scaffold.dart';
+import 'package:flutter_bloc_template/base/shared_view/dialog/app_dialogs.dart';
 import 'package:flutter_bloc_template/domain/entity/course/search_history_entity.dart';
 import 'package:flutter_bloc_template/resource/generated/assets.gen.dart';
 import 'package:flutter_bloc_template/ui/home/components/home_search_widget.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/bloc/home_search_bloc.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/bloc/home_search_event.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/bloc/home_search_state.dart';
+import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_filter_list_widget.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_history_list_widget.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_result_list_widget.dart';
 import 'package:flutter_bloc_template/ui/home/page/home_search/components/home_search_suggestion_list_widget.dart';
@@ -88,6 +90,14 @@ class _HomeSearchPageState extends FoundationState<HomeSearchPage, HomeSearchBlo
           bloc.add(HomeSearchKeywordChangedEvent(keyword: value.trim(), completer: completer));
           final result = await completer.future;
           bloc.add(HomeSearchStatusChangedEvent(status: result));
+        },
+        onFilterPressed: () {
+          AppDialogs.showScrollBottomSheet(
+            context,
+            builder: (_, scrollController) => HomeSearchFilterListWidget(
+              scrollController: scrollController,
+            ),
+          );
         },
       ),
       titleType: AppBarTitle.widget,
