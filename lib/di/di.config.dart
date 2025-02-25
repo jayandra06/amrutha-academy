@@ -74,11 +74,11 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     gh.factory<_i792.CourseListBloc>(() => _i792.CourseListBloc());
+    gh.factory<_i494.SettingNotificationBloc>(
+        () => _i494.SettingNotificationBloc());
     gh.factory<_i919.LoginBloc>(() => _i919.LoginBloc());
     gh.factory<_i839.LoadAppConfigUseCase>(() => _i839.LoadAppConfigUseCase());
     gh.factory<_i92.LogoutUseCase>(() => _i92.LogoutUseCase());
-    gh.factory<_i494.SettingNotificationBloc>(
-        () => _i494.SettingNotificationBloc());
     gh.lazySingleton<_i502.AppRouter>(() => _i502.AppRouter());
     gh.lazySingleton<_i417.CourseService>(
         () => _i417.CourseService(gh<_i361.Dio>()));

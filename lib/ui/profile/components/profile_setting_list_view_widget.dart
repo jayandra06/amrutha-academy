@@ -22,7 +22,10 @@ class ProfileSettingListViewWidget extends StatelessWidget {
           label: 'Edit Profile',
           icon: Assets.icons.profileCurved.svg(),
         ),
-        _item(onTap: () => AutoRouter.of(context).push(const SettingNotificationRoute()), label: 'Notification', icon: Assets.icons.notificationCurved.svg()),
+        _item(
+            onTap: () => AutoRouter.of(context).push(const SettingNotificationRoute()),
+            label: 'Notification',
+            icon: Assets.icons.notificationCurved.svg()),
         _item(onTap: () {}, label: 'Payment', icon: Assets.icons.walletCurved.svg()),
         _item(onTap: () {}, label: 'Security', icon: Assets.icons.shieldDoneCurved.svg()),
         _item(
@@ -62,7 +65,10 @@ class ProfileSettingListViewWidget extends StatelessWidget {
               },
             )),
         _item(onTap: () {}, label: 'Privacy Policy', icon: Assets.icons.lockCurved.svg()),
-        _item(onTap: () {}, label: 'Help Center', icon: Assets.icons.infoSquareCurved.svg()),
+        _item(
+            onTap: () => AutoRouter.of(context).push(const HelpCenterRoute()),
+            label: 'Help Center',
+            icon: Assets.icons.infoSquareCurved.svg()),
         _item(onTap: () {}, label: 'Invite Friends', icon: Assets.icons.usersCurve.svg()),
         _item(
           onTap: () {},

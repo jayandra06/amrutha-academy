@@ -15,7 +15,10 @@ abstract final class AppTheme {
           indicatorSize: TabBarIndicatorSize.tab,
           labelStyle: AppTextStyles.bodyXLargeSemiBold.copyWith(color: AppColors.current.primary500),
           unselectedLabelStyle: AppTextStyles.bodyXLargeSemiBold.copyWith(color: AppColors.current.greyscale500),
-          indicator: UnderlineTabIndicator(borderSide: BorderSide(width: 2, color: AppColors.current.primary500))));
+          indicator: UnderlineTabIndicator(
+            borderSide: BorderSide(width: 4, color: AppColors.current.primary500),
+            borderRadius: BorderRadius.circular(100),
+          )));
 
   static ThemeData get dark => ThemeData(
         useMaterial3: true,

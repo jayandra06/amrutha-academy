@@ -7,7 +7,7 @@ class CommonExpandableSection extends StatefulWidget {
   const CommonExpandableSection({super.key, this.expand = false, required this.child});
 
   @override
-  _ExpandedSectionState createState() => _ExpandedSectionState();
+  State<CommonExpandableSection> createState() => _ExpandedSectionState();
 }
 
 class _ExpandedSectionState extends State<CommonExpandableSection> with SingleTickerProviderStateMixin {

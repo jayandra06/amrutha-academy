@@ -167,3 +167,15 @@ enum NotificationSetting {
     };
   }
 }
+
+enum HelpCenterTab {
+  faq,
+  contactUs;
+
+  String fromTitle() {
+    return switch(this) {
+      HelpCenterTab.faq => 'FAQ',
+      HelpCenterTab.contactUs => 'Contact us',
+    };
+  }
+}
