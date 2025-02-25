@@ -5,4 +5,31 @@ sealed class EditProfileEvent extends BaseEvent {
   List<Object?> get props => [];
 }
 
-class EditProfileDataRequestEvent extends EditProfileEvent {}
+final class EditProfileDataRequestEvent extends EditProfileEvent {}
+
+final class ProfileNameChangedEvent extends EditProfileEvent {
+  final String value;
+
+  ProfileNameChangedEvent(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
+final class ProfileEmailChangedEvent extends EditProfileEvent {
+  final String value;
+
+  ProfileEmailChangedEvent(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
+final class ProfilePhoneNumberChangedEvent extends EditProfileEvent {
+  final String value;
+
+  ProfilePhoneNumberChangedEvent(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}

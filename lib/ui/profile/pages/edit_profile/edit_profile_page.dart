@@ -1,5 +1,6 @@
 import 'package:auto_route/annotations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_bloc_template/base/constants/ui/dimens.dart';
 import 'package:flutter_bloc_template/base/extension/context_extension.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_app_bar.dart';
@@ -10,12 +11,16 @@ import 'package:flutter_bloc_template/base/shared_view/common_scaffold.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_text_field.dart';
 import 'package:flutter_bloc_template/base/shared_view/dialog/app_dialogs.dart';
 import 'package:flutter_bloc_template/base/shared_view/foundation_state.dart';
+import 'package:flutter_bloc_template/domain/entity/enum/enum.dart';
+import 'package:flutter_bloc_template/ui/profile/pages/edit_profile/bloc/edit_profile_state.dart';
+import 'package:flutter_bloc_template/ui/profile/pages/edit_profile/components/edit_profile_gender_widget.dart';
 import 'package:gap/gap.dart';
 
 import '../../../../base/constants/ui/app_colors.dart';
 import '../../../../resource/generated/assets.gen.dart';
 import '../../../../resource/generated/l10n.dart';
 import 'bloc/edit_profile_bloc.dart';
+import 'bloc/edit_profile_event.dart';
 
 @RoutePage()
 class EditProfilePage extends StatefulWidget {
@@ -27,6 +32,12 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfileBloc> {
   @override
+  void initState() {
+    super.initState();
+    bloc.add(EditProfileDataRequestEvent());
+  }
+
+  @override
   Widget buildPage(BuildContext context) {
     return CommonScaffold(
       appBar: CommonAppBar(text: S.current.edit_profile, centerTitle: false),
@@ -36,9 +47,17 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CommonTextField(
-              hintText: 'Name',
-              onChanged: (val) {},
+            BlocBuilder<EditProfileBloc, EditProfileState>(
+              buildWhen: (prev, curr) => (prev.nameInput != curr.nameInput) || (prev.userEntity.fullName != curr.userEntity.fullName),
+              builder: (_, state) {
+                return CommonTextField(
+                  key: ValueKey('nameInput-${state.userEntity.fullName}'),
+                  initialValue: state.userEntity.fullName,
+                  hintText: 'Name',
+                  errorText: state.nameInput.displayError?.fromTitle(),
+                  onChanged: (val) => bloc.add(ProfileNameChangedEvent(val)),
+                );
+              },
             ),
             const Gap(Dimens.paddingVerticalLarge),
             CommonTextField(
@@ -47,9 +66,8 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
                 AppDialogs.showDisableScrollBottomSheet(
                   context,
                   builder: (_) => CommonCalendarPicker(
-                    onDateTimeChanged: (val) {
-                      print('val----> $val');
-                    },
+                    lastDate: DateTime.now(),
+                    onDateTimeChanged: (val) {},
                   ),
                 );
               },
@@ -63,16 +81,23 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
                   fit: BoxFit.scaleDown),
             ),
             const Gap(Dimens.paddingVerticalLarge),
-            CommonTextField(
-              hintText: 'Email',
-              onChanged: (val) {},
-              keyboardType: TextInputType.emailAddress,
-              suffixIcon: Assets.icons.messageCurved.svg(
-                  colorFilter: ColorFilter.mode(
-                    AppColors.current.greyscale900,
-                    BlendMode.srcIn,
-                  ),
-                  fit: BoxFit.scaleDown),
+            BlocBuilder<EditProfileBloc, EditProfileState>(
+              buildWhen: (prev, curr) => (prev.emailInput != curr.emailInput) || (prev.userEntity.fullName != curr.userEntity.fullName),
+              builder: (_, state) {
+                return CommonTextField(
+                  key: ValueKey('emailInput-${state.userEntity.email}'),
+                  initialValue: state.userEntity.email,
+                  hintText: 'Email',
+                  onChanged: (val) => bloc.add(ProfileEmailChangedEvent(val)),
+                  keyboardType: TextInputType.emailAddress,
+                  suffixIcon: Assets.icons.messageCurved.svg(
+                      colorFilter: ColorFilter.mode(
+                        AppColors.current.greyscale900,
+                        BlendMode.srcIn,
+                      ),
+                      fit: BoxFit.scaleDown),
+                );
+              },
             ),
             const Gap(Dimens.paddingVerticalLarge),
             CommonTextField(
@@ -97,11 +122,9 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
                 AppDialogs.showDisableScrollBottomSheet(
                   context,
                   builder: (_) {
-                    return const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ListTile(title: Text('data')),
-                      ],
+                    return const SafeArea(
+                      minimum: EdgeInsets.symmetric(horizontal: Dimens.paddingHorizontalLarge),
+                      child: EditProfileGenderWidget(),
                     );
                   },
                 );

@@ -30,6 +30,7 @@ class CommonTextField extends StatefulWidget {
     this.inputFormatters,
     this.onTap,
     this.ignoring = false,
+    this.initialValue,
   });
 
   final String? label;
@@ -54,6 +55,7 @@ class CommonTextField extends StatefulWidget {
   final List<TextInputFormatter>? inputFormatters;
   final VoidCallback? onTap;
   final bool ignoring;
+  final String? initialValue;
 
   @override
   State<CommonTextField> createState() => _CommonTextFieldState();
@@ -61,7 +63,8 @@ class CommonTextField extends StatefulWidget {
 
 class _CommonTextFieldState extends State<CommonTextField> {
   late ValueNotifier<bool> visibleNotifier = ValueNotifier(widget.obscureText);
-  late final TextEditingController _editingController = widget.controller != null ? widget.controller! : TextEditingController();
+  late final TextEditingController _editingController =
+      widget.controller != null ? widget.controller! : TextEditingController(text: widget.initialValue);
 
   late final FocusNode focusNode = FocusNode();
 
@@ -135,18 +138,18 @@ class _CommonTextFieldState extends State<CommonTextField> {
             ),
           ),
         ),
-        // if (widget.errorText != null) ...[
-        //   const SizedBox(height: 6),
-        //   Row(
-        //     mainAxisAlignment: MainAxisAlignment.start,
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: [
-        //       Icon(Icons.clear, size: 16, color: AppColors.current.error),
-        //       const SizedBox(width: 4),
-        //       Expanded(child: Text(widget.errorText!, style: AppTextStyles.textBody12.copyWith(color: AppColors.current.errorColor)))
-        //     ],
-        //   )
-        // ],
+        if (widget.errorText != null) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.clear, size: 16, color: AppColors.current.error),
+              const SizedBox(width: 4),
+              Expanded(child: Text(widget.errorText!, style: AppTextStyles.bodySmallRegular.copyWith(color: AppColors.current.error)))
+            ],
+          )
+        ],
       ],
     );
   }

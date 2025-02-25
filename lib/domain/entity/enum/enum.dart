@@ -29,7 +29,7 @@ enum BottomTab {
   home,
   myCourse,
   inbox,
-  transcation,
+  transaction,
   profile;
 
   Widget fromWidget([bool enable = false]) {
@@ -37,7 +37,7 @@ enum BottomTab {
       BottomTab.home => enable ? Assets.icons.homeEnable : Assets.icons.home,
       BottomTab.myCourse => enable ? Assets.icons.documentEnable : Assets.icons.document,
       BottomTab.inbox => enable ? Assets.icons.chatEnable : Assets.icons.chat,
-      BottomTab.transcation => enable ? Assets.icons.buyEnable : Assets.icons.buy,
+      BottomTab.transaction => enable ? Assets.icons.buyEnable : Assets.icons.buy,
       BottomTab.profile => enable ? Assets.icons.profileEnable : Assets.icons.profile,
     };
 
@@ -49,7 +49,7 @@ enum BottomTab {
       BottomTab.home => S.current.home,
       BottomTab.myCourse => S.current.my_course,
       BottomTab.inbox => S.current.inbox,
-      BottomTab.transcation => S.current.transaction,
+      BottomTab.transaction => S.current.transaction,
       BottomTab.profile => S.current.profile,
     };
   }
@@ -124,6 +124,18 @@ enum SearchResultTab {
     return switch (this) {
       SearchResultTab.course => 'Course',
       SearchResultTab.mentor => 'Mentor',
+    };
+  }
+}
+
+enum Gender {
+  male,
+  female;
+
+  String fromTitle() {
+    return switch(this) {
+      Gender.male => 'Male',
+      Gender.female => 'Female',
     };
   }
 }
