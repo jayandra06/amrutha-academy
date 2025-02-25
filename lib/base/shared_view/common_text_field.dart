@@ -29,6 +29,7 @@ class CommonTextField extends StatefulWidget {
     this.readOnly = false,
     this.inputFormatters,
     this.onTap,
+    this.ignoring = false,
   });
 
   final String? label;
@@ -52,6 +53,7 @@ class CommonTextField extends StatefulWidget {
   final bool readOnly;
   final List<TextInputFormatter>? inputFormatters;
   final VoidCallback? onTap;
+  final bool ignoring;
 
   @override
   State<CommonTextField> createState() => _CommonTextFieldState();
@@ -89,44 +91,48 @@ class _CommonTextFieldState extends State<CommonTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          child: ValueListenableBuilder<bool>(
-            valueListenable: visibleNotifier,
-            builder: (_, visible, __) {
-              return TextFormField(
-                onTap: widget.onTap,
-                readOnly: widget.readOnly,
-                focusNode: focusNode,
-                inputFormatters: widget.inputFormatters,
-                autofocus: widget.autoFocus,
-                onChanged: widget.onChanged,
-                controller: _editingController,
-                enableSuggestions: false,
-                keyboardType: widget.keyboardType,
-                maxLength: widget.maxLength,
-                autocorrect: false,
-                obscureText: visible,
-                enabled: widget.enable,
-                obscuringCharacter: widget.obscuringCharacter ?? '●',
-                style: AppTextStyles.bodyMediumSemiBold,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: _colorFocus,
-                  counterText: widget.counterText,
-                  prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                  prefixIcon: _buildPrefixIcon(),
-                  suffixIcon: widget.suffixIcon ?? (widget.obscureText ? _buildSuffixIcon() : null),
-                  hintText: widget.hintText,
-                  hintStyle: AppTextStyles.bodyMediumRegular.copyWith(color: AppColors.current.greyscale500),
-                  border: _inputBorder(),
-                  focusedBorder: _inputBorder(AppColors.current.primary500),
-                  enabledBorder: _inputBorder(widget.errorText != null ? AppColors.current.error : null),
-                  errorBorder: _inputBorder(AppColors.current.error),
-                  disabledBorder: _inputBorder(),
-                  focusedErrorBorder: _inputBorder(AppColors.current.error),
-                ),
-              );
-            },
+        GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: IgnorePointer(
+            ignoring: widget.ignoring,
+            child: ValueListenableBuilder<bool>(
+              valueListenable: visibleNotifier,
+              builder: (_, visible, __) {
+                return TextFormField(
+                  readOnly: widget.readOnly,
+                  focusNode: focusNode,
+                  inputFormatters: widget.inputFormatters,
+                  autofocus: widget.autoFocus,
+                  onChanged: widget.onChanged,
+                  controller: _editingController,
+                  enableSuggestions: false,
+                  keyboardType: widget.keyboardType,
+                  maxLength: widget.maxLength,
+                  autocorrect: false,
+                  obscureText: visible,
+                  enabled: widget.enable,
+                  obscuringCharacter: widget.obscuringCharacter ?? '●',
+                  style: AppTextStyles.bodyMediumSemiBold,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: _colorFocus,
+                    counterText: widget.counterText,
+                    prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                    prefixIcon: _buildPrefixIcon(),
+                    suffixIcon: widget.suffixIcon ?? (widget.obscureText ? _buildSuffixIcon() : null),
+                    hintText: widget.hintText,
+                    hintStyle: AppTextStyles.bodyMediumRegular.copyWith(color: AppColors.current.greyscale500),
+                    border: _inputBorder(),
+                    focusedBorder: _inputBorder(AppColors.current.primary500),
+                    enabledBorder: _inputBorder(widget.errorText != null ? AppColors.current.error : null),
+                    errorBorder: _inputBorder(AppColors.current.error),
+                    disabledBorder: _inputBorder(),
+                    focusedErrorBorder: _inputBorder(AppColors.current.error),
+                  ),
+                );
+              },
+            ),
           ),
         ),
         // if (widget.errorText != null) ...[

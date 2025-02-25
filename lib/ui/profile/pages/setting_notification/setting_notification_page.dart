@@ -17,8 +17,8 @@ class _SettingNotificationPageState extends FoundationState<SettingNotificationP
   @override
   Widget buildPage(BuildContext context) {
     return CommonScaffold(
-      appBar: CommonAppBar(text: 'Notification'),
-      body: SingleChildScrollView(
+      appBar: CommonAppBar(text: 'Notification', centerTitle: false),
+      body: const SingleChildScrollView(
         child: Column(
           children: [],
         ),

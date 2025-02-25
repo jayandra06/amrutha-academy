@@ -5,6 +5,7 @@ import 'package:flutter_bloc_template/base/extension/context_extension.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_app_bar.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_bottom_navigator_bar_background.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_button.dart';
+import 'package:flutter_bloc_template/base/shared_view/common_calendar_picker.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_scaffold.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_text_field.dart';
 import 'package:flutter_bloc_template/base/shared_view/dialog/app_dialogs.dart';
@@ -41,8 +42,19 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
             ),
             const Gap(Dimens.paddingVerticalLarge),
             CommonTextField(
+              onTap: () {
+                context.hideKeyboard();
+                AppDialogs.showDisableScrollBottomSheet(
+                  context,
+                  builder: (_) => CommonCalendarPicker(
+                    onDateTimeChanged: (val) {
+                      print('val----> $val');
+                    },
+                  ),
+                );
+              },
+              ignoring: true,
               hintText: 'Birthday',
-              onChanged: (val) {},
               suffixIcon: Assets.icons.calendarCurved.svg(
                   colorFilter: ColorFilter.mode(
                     AppColors.current.greyscale900,
@@ -54,6 +66,7 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
             CommonTextField(
               hintText: 'Email',
               onChanged: (val) {},
+              keyboardType: TextInputType.emailAddress,
               suffixIcon: Assets.icons.messageCurved.svg(
                   colorFilter: ColorFilter.mode(
                     AppColors.current.greyscale900,
@@ -75,15 +88,16 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
             const Gap(Dimens.paddingVerticalLarge),
             CommonTextField(
               hintText: 'Phone',
+              keyboardType: TextInputType.phone,
               onChanged: (val) {},
             ),
             const Gap(Dimens.paddingVerticalLarge),
-            GestureDetector(
+            CommonTextField(
               onTap: () {
                 AppDialogs.showDisableScrollBottomSheet(
                   context,
                   builder: (_) {
-                    return Column(
+                    return const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ListTile(title: Text('data')),
@@ -92,20 +106,14 @@ class _EditProfilePageState extends FoundationState<EditProfilePage, EditProfile
                   },
                 );
               },
-              behavior: HitTestBehavior.opaque,
-              child: IgnorePointer(
-                ignoring: true,
-                child: CommonTextField(
-                  readOnly: false,
-                  hintText: 'Gender',
-                  suffixIcon: Assets.icons.arrowDownBold2.svg(
-                      colorFilter: ColorFilter.mode(
-                        AppColors.current.greyscale900,
-                        BlendMode.srcIn,
-                      ),
-                      fit: BoxFit.scaleDown),
-                ),
-              ),
+              ignoring: true,
+              hintText: 'Gender',
+              suffixIcon: Assets.icons.arrowDownBold2.svg(
+                  colorFilter: ColorFilter.mode(
+                    AppColors.current.greyscale900,
+                    BlendMode.srcIn,
+                  ),
+                  fit: BoxFit.scaleDown),
             ),
           ],
         ),
