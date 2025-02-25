@@ -133,9 +133,37 @@ enum Gender {
   female;
 
   String fromTitle() {
-    return switch(this) {
+    return switch (this) {
       Gender.male => 'Male',
       Gender.female => 'Female',
+    };
+  }
+}
+
+enum NotificationSetting {
+  general,
+  sound,
+  vibrate,
+  specialOffers,
+  promoDiscount,
+  payments,
+  cashback,
+  appUpdates,
+  newServiceAvailable,
+  newTipsAvailable;
+
+  String fromTitle() {
+    return switch (this) {
+      NotificationSetting.general => 'General Notification',
+      NotificationSetting.sound => 'Sound',
+      NotificationSetting.vibrate => 'Vibrate',
+      NotificationSetting.specialOffers => 'Special Offers',
+      NotificationSetting.promoDiscount => 'Promo & Discount',
+      NotificationSetting.payments => 'Payments',
+      NotificationSetting.cashback => 'Cashback',
+      NotificationSetting.appUpdates => 'App Updates',
+      NotificationSetting.newServiceAvailable => 'New Service Available',
+      NotificationSetting.newTipsAvailable => 'New Tips Available',
     };
   }
 }
