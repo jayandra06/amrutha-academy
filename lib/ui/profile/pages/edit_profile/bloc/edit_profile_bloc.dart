@@ -17,7 +17,7 @@ class EditProfileBloc extends BaseBloc<EditProfileEvent, EditProfileState> {
       : super(EditProfileState(
           nameInput: const NameInput.pure(),
           emailInput: const EmailInput.pure(),
-          userEntity: UserEntity.defaultValue(),
+          user: UserEntity.defaultValue(),
         )) {
     on<EditProfileDataRequestEvent>(_onEditProfileDataRequestEvent);
     on<ProfileNameChangedEvent>(_onProfileNameChangedEvent);
@@ -33,7 +33,7 @@ class EditProfileBloc extends BaseBloc<EditProfileEvent, EditProfileState> {
         final result = await _fetchProfileUseCase.invoke(null);
         result.when(
           ok: (data) {
-            emit(state.copyWith(userEntity: data));
+            emit(state.copyWith(user: data));
           },
         );
       },

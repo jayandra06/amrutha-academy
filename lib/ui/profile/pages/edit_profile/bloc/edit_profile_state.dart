@@ -7,23 +7,23 @@ import '../utils/email_input.dart';
 final class EditProfileState extends BaseState {
   final NameInput nameInput;
   final EmailInput emailInput;
-  final UserEntity userEntity;
+  final UserEntity user;
 
   EditProfileState({
     required this.nameInput,
     required this.emailInput,
-    required this.userEntity,
+    required this.user,
   });
 
   EditProfileState copyWith({
     NameInput? nameInput,
     EmailInput? emailInput,
-    UserEntity? userEntity,
+    UserEntity? user,
   }) {
     return EditProfileState(
       nameInput: nameInput ?? this.nameInput,
       emailInput: emailInput ?? this.emailInput,
-      userEntity: userEntity ?? this.userEntity,
+      user: user ?? this.user,
     );
   }
 
@@ -31,6 +31,6 @@ final class EditProfileState extends BaseState {
   List<Object?> get props => [
         nameInput,
         emailInput,
-        userEntity,
+    user,
       ];
 }
