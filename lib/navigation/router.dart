@@ -35,6 +35,7 @@ class AppRouter extends RootStackRouter {
         AutoRoute(page: SettingLanguageRoute.page),
         AutoRoute(page: SettingNotificationRoute.page),
         AutoRoute(page: HelpCenterRoute.page),
+        AutoRoute(page: SettingPaymentRoute.page),
       ];
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc_template/base/constants/ui/app_text_styles.dart';
 import 'package:flutter_bloc_template/navigation/router.gr.dart';
 import 'package:flutter_bloc_template/resource/generated/assets.gen.dart';
+import 'package:flutter_bloc_template/ui/profile/pages/setting_payment/setting_payment_page.dart';
 import 'package:gap/gap.dart';
 
 import '../../../base/constants/ui/app_colors.dart';
@@ -26,7 +27,8 @@ class ProfileSettingListViewWidget extends StatelessWidget {
             onTap: () => AutoRouter.of(context).push(const SettingNotificationRoute()),
             label: 'Notification',
             icon: Assets.icons.notificationCurved.svg()),
-        _item(onTap: () {}, label: 'Payment', icon: Assets.icons.walletCurved.svg()),
+        _item(
+            onTap: () => AutoRouter.of(context).push(const SettingPaymentRoute()), label: 'Payment', icon: Assets.icons.walletCurved.svg()),
         _item(onTap: () {}, label: 'Security', icon: Assets.icons.shieldDoneCurved.svg()),
         _item(
           onTap: () => AutoRouter.of(context).push(const SettingNotificationRoute()),
