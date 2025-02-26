@@ -1,10 +1,12 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc_template/base/extension/context_extension.dart';
 
 import '../../resource/generated/assets.gen.dart';
 import '../constants/ui/app_colors.dart';
 import '../constants/ui/app_text_styles.dart';
+import '../constants/ui/dimens.dart';
 
 class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   CommonAppBar({
@@ -100,7 +102,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
               highlightColor: Colors.transparent,
               onPressed: onLeadingPressed ?? () => _onPop(context),
               icon: Container(
-                padding: const EdgeInsets.only(left: 16),
+                padding: const EdgeInsets.only(left: Dimens.paddingHorizontal),
                 child: LeadingIcon.close == leadingIcon ? const Icon(Icons.close) : Assets.icons.arrowLeft.svg(),
               ),
             ),
@@ -110,9 +112,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
         behavior: HitTestBehavior.translucent,
         child: titleType == AppBarTitle.text
             ? Text(text ?? '', style: titleTextStyle ?? AppTextStyles.h4Bold)
-            : titleType == AppBarTitle.logo
-                ? Assets.icons.chevronLeft.svg()
-                : (titleType == AppBarTitle.widget ? text : null),
+            : (titleType == AppBarTitle.widget ? text : null),
       ),
       actions: actions,
       elevation: elevation,
@@ -122,7 +122,6 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   void _onPop(BuildContext context) {
     AutoRouter.of(context).back();
     // final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom.toInt() > 0;
-
     // if (isKeyboardVisible) context.hideKeyboard();
     // Future.delayed(isKeyboardVisible ? const ShortDuration() : Duration.zero, () => AutoRouter.of(context).back());
   }
@@ -135,7 +134,6 @@ enum LeadingIcon {
 }
 
 enum AppBarTitle {
-  logo,
   text,
   widget,
   none,

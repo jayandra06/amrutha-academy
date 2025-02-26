@@ -4,6 +4,8 @@ import 'package:flutter_bloc_template/base/shared_view/animation/common_animatio
 import 'package:flutter_bloc_template/base/shared_view/common_app_bar.dart';
 import 'package:flutter_bloc_template/base/shared_view/common_scaffold.dart';
 
+import '../../../../base/constants/ui/app_text_styles.dart';
+
 @RoutePage()
 class SettingPaymentPage extends StatefulWidget {
   const SettingPaymentPage({super.key});
@@ -18,10 +20,7 @@ class _SettingPaymentPageState extends State<SettingPaymentPage> with TickerProv
   Widget build(BuildContext context) {
     return CommonScaffold(
       appBar: CommonAppBar(
-        text: CommonAnimationSlide(
-          slideDirection: SlideDirection.fromRight,
-          child: const Text('Payment'),
-        ),
+        text: 'Payment',
         titleType: AppBarTitle.widget,
         centerTitle: false,
         onLeadingPressed: () => AutoRouter.of(context).back(),
