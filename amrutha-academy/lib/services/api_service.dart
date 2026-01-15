@@ -1,0 +1,92 @@
+import 'package:dio/dio.dart';
+import '../core/config/firebase_config.dart';
+import '../data/models/api_response.dart';
+
+class ApiService {
+  final Dio _dio;
+
+  ApiService(this._dio);
+
+  // Add auth token to requests
+  Future<void> _addAuthToken() async {
+    try {
+      final user = FirebaseConfig.auth?.currentUser;
+      if (user != null) {
+        final token = await user.getIdToken();
+        _dio.options.headers['Authorization'] = 'Bearer $token';
+      } else {
+        _dio.options.headers.remove('Authorization');
+      }
+    } catch (e) {
+      // If getting token fails, remove auth header
+      _dio.options.headers.remove('Authorization');
+    }
+  }
+
+  Future<ApiResponse<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    required T Function(dynamic) fromJson,
+  }) async {
+    try {
+      await _addAuthToken();
+      final response = await _dio.get(path, queryParameters: queryParameters);
+      return ApiResponse.fromJson(response.data, fromJson);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ApiResponse<T>> post<T>(
+    String path, {
+    dynamic data,
+    required T Function(dynamic) fromJson,
+  }) async {
+    try {
+      await _addAuthToken();
+      final response = await _dio.post(path, data: data);
+      return ApiResponse.fromJson(response.data, fromJson);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ApiResponse<T>> put<T>(
+    String path, {
+    dynamic data,
+    required T Function(dynamic) fromJson,
+  }) async {
+    try {
+      await _addAuthToken();
+      final response = await _dio.put(path, data: data);
+      return ApiResponse.fromJson(response.data, fromJson);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<ApiResponse<T>> delete<T>(
+    String path, {
+    required T Function(dynamic) fromJson,
+  }) async {
+    try {
+      await _addAuthToken();
+      final response = await _dio.delete(path);
+      return ApiResponse.fromJson(response.data, fromJson);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Exception _handleError(dynamic error) {
+    if (error is DioException) {
+      if (error.response != null) {
+        return Exception(error.response?.data['error'] ?? 'An error occurred');
+      } else {
+        return Exception('Network error. Please check your connection.');
+      }
+    }
+    return Exception('An unexpected error occurred');
+  }
+}
+
