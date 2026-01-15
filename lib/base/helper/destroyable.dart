@@ -1,3 +1,0 @@
-mixin Destroyable {
-  void dispose();
-}
