@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../services/api_service.dart';
 import '../../../data/models/api_response.dart';
 import '../../../core/config/di_config.dart';
+import '../../widgets/app_drawer.dart';
 import 'package:get_it/get_it.dart';
 
 class CreateCourseScreen extends StatefulWidget {
@@ -130,6 +131,7 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: AppDrawer(),
       appBar: AppBar(
         title: const Text('Create Course'),
       ),

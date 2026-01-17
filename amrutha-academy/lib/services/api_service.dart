@@ -81,12 +81,22 @@ class ApiService {
   Exception _handleError(dynamic error) {
     if (error is DioException) {
       if (error.response != null) {
-        return Exception(error.response?.data['error'] ?? 'An error occurred');
+        // Server responded with error
+        final errorMessage = error.response?.data['error'] ?? 
+                            error.response?.data['message'] ?? 
+                            'Server error: ${error.response?.statusCode}';
+        return Exception(errorMessage);
+      } else if (error.type == DioExceptionType.connectionTimeout ||
+                 error.type == DioExceptionType.sendTimeout ||
+                 error.type == DioExceptionType.receiveTimeout) {
+        return Exception('Connection timeout. Please check your internet connection and ensure the backend server is running.');
+      } else if (error.type == DioExceptionType.connectionError) {
+        return Exception('Cannot connect to server. Make sure the backend is running at ${_dio.options.baseUrl}. For physical devices, use your computer\'s IP address instead of 10.0.2.2');
       } else {
-        return Exception('Network error. Please check your connection.');
+        return Exception('Network error: ${error.message ?? "Please check your connection"}');
       }
     }
-    return Exception('An unexpected error occurred');
+    return Exception('An unexpected error occurred: $error');
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'create_course_screen.dart';
+import '../../widgets/app_drawer.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -7,6 +8,7 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: AppDrawer(),
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
       ),

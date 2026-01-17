@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "seed-admin": "tsx scripts/seed-admin.ts",
+    "create-admin": "tsx scripts/create-admin-user.ts",
+    "create-admin-api": "tsx scripts/create-admin-via-api.ts",
+    "create-trainer-student": "tsx scripts/create-trainer-student.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

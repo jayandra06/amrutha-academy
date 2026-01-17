@@ -5,6 +5,7 @@ import '../../../data/models/api_response.dart';
 import '../../../data/models/schedule_model.dart';
 import '../../../services/notification_service.dart';
 import '../../../core/config/di_config.dart';
+import '../../widgets/app_drawer.dart';
 import 'package:get_it/get_it.dart';
 
 class UpcomingClassesScreen extends StatefulWidget {
@@ -88,6 +89,7 @@ class _UpcomingClassesScreenState extends State<UpcomingClassesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Upcoming Classes'),
       ),
