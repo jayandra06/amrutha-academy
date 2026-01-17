@@ -22,7 +22,16 @@ if (!getApps().length) {
       const serviceAccountJson = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
       
       if (serviceAccountJson.private_key && serviceAccountJson.client_email && serviceAccountJson.project_id) {
-        const privateKey = serviceAccountJson.private_key.replace(/\\n/g, '\n');
+        // Ensure private key has proper newlines and is valid
+        let privateKey = serviceAccountJson.private_key;
+        
+        // Replace escaped newlines with actual newlines
+        privateKey = privateKey.replace(/\\n/g, '\n');
+        
+        // Validate private key format
+        if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
+          throw new Error('Invalid private key format in service account file');
+        }
         
         const serviceAccount: ServiceAccount = {
           projectId: serviceAccountJson.project_id,
@@ -39,6 +48,8 @@ if (!getApps().length) {
       }
     } catch (error: any) {
       console.error('Firebase initialization error (using service account JSON file):', error.message);
+      console.error('Error details:', error.code || 'N/A');
+      // Continue to try other methods
     }
   }
   
@@ -94,9 +105,22 @@ if (app) {
     authInstance = getAuth(app);
     storageInstance = getStorage(app);
     databaseInstance = getDatabase(app);
-  } catch (error) {
-    console.error('Error initializing Firebase services:', error);
+    console.log('✅ Firebase services initialized');
+  } catch (error: any) {
+    console.error('Error initializing Firebase services:', error.message);
+    // Set to undefined so we know services aren't available
+    db = undefined as any;
+    authInstance = undefined as any;
+    storageInstance = undefined as any;
+    databaseInstance = undefined as any;
   }
+} else {
+  console.warn('⚠️  Firebase app not initialized. Services will not be available.');
+  // Initialize as undefined to prevent errors
+  db = undefined as any;
+  authInstance = undefined as any;
+  storageInstance = undefined as any;
+  databaseInstance = undefined as any;
 }
 
 // Export services (will be undefined if Firebase is not initialized)

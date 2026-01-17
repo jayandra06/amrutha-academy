@@ -11,12 +11,31 @@ import { User } from '@/types';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check if Firebase Auth is initialized
+    if (!auth) {
+      console.error('Firebase Auth not initialized. Check Firebase configuration.');
+      return NextResponse.json(
+        createErrorResponse('Firebase Auth not initialized. Please check server configuration.', 500),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         createErrorResponse('Firebase ID token is required in Authorization header', 401),
-        { status: 401 }
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
 
@@ -25,8 +44,11 @@ export async function POST(request: NextRequest) {
     // Get role preference from request body (optional)
     let requestedRole = 'student';
     try {
-      const body = await request.json();
-      requestedRole = body.role || 'student';
+      const contentType = request.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const body = await request.json().catch(() => ({}));
+        requestedRole = body.role || 'student';
+      }
     } catch {
       // If body is not valid JSON or empty, use default 'student'
       requestedRole = 'student';
@@ -82,7 +104,12 @@ export async function POST(request: NextRequest) {
           200,
           ['Authentication successful']
         ),
-        { status: 200 }
+        { 
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     } catch (error: any) {
       console.error('Token verification error:', error);
@@ -90,20 +117,35 @@ export async function POST(request: NextRequest) {
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/id-token-expired') {
         return NextResponse.json(
           createErrorResponse('Invalid or expired token', 401),
-          { status: 401 }
+          { 
+            status: 401,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
         );
       }
       
       return NextResponse.json(
-        createErrorResponse('Failed to verify token', 500),
-        { status: 500 }
+        createErrorResponse(`Failed to verify token: ${error.message || 'Unknown error'}`, 500),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Verify ID token error:', error);
     return NextResponse.json(
-      createErrorResponse('Internal server error', 500),
-      { status: 500 }
+      createErrorResponse(`Internal server error: ${error?.message || 'Unknown error'}`, 500),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
   }
 }
