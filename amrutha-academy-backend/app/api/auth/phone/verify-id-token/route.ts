@@ -22,6 +22,16 @@ export async function POST(request: NextRequest) {
 
     const idToken = authHeader.substring(7);
     
+    // Get role preference from request body (optional)
+    let requestedRole = 'student';
+    try {
+      const body = await request.json();
+      requestedRole = body.role || 'student';
+    } catch {
+      // If body is not valid JSON or empty, use default 'student'
+      requestedRole = 'student';
+    }
+    
     try {
       // Verify the ID token
       const decodedToken = await auth.verifyIdToken(idToken);
@@ -32,7 +42,7 @@ export async function POST(request: NextRequest) {
       let user = await UserService.getUserById(firebaseUserId);
       const isNewUser = !user;
 
-      // If new user, create user record
+      // If new user, create user record with requested role (trainer/student)
       if (isNewUser) {
         const userData: Partial<User> = {
           phoneNumber: phoneNumber,
@@ -42,10 +52,20 @@ export async function POST(request: NextRequest) {
           bio: '',
           birthday: '',
           location: '',
-          role: 'student', // Default role
+          role: requestedRole === 'trainer' ? 'trainer' : 'student',
         };
 
         user = await UserService.createUser(firebaseUserId, userData);
+      } else {
+        // For existing users, verify they have the correct role if trainer was requested
+        // If user is trying to login as trainer but doesn't have trainer role, keep their existing role
+        if (requestedRole === 'trainer' && user.role !== 'trainer') {
+          // User doesn't have trainer role, they'll be logged in with their existing role (student)
+          // This is acceptable - they'll just see student interface
+        }
+        // If user is trainer and login as trainer is selected, they're good
+        // If user is trainer but login as student is selected, they'll be logged in as trainer (their actual role)
+        // User's role in database takes precedence
       }
 
       // Create custom token (optional, client can use ID token directly)
