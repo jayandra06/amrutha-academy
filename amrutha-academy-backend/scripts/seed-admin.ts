@@ -6,8 +6,8 @@ import { COLLECTIONS } from '../lib/firebase/collections';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 // Admin phone number configuration
-const ADMIN_PHONE_NUMBER = '9550538735';
-const ADMIN_PHONE_WITH_CODE = '+919550538735'; // Format used in Firebase Auth
+const ADMIN_PHONE_NUMBER = '8309057182';
+const ADMIN_PHONE_WITH_CODE = '+918309057182'; // Format used in Firebase Auth
 const ADMIN_EMAIL = 'admin@amruthaacademy.com';
 const ADMIN_NAME = 'Admin User';
 
@@ -138,7 +138,7 @@ async function seedAdminUser() {
       
       console.log('📋 To set up admin user:');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('1. Login to the Flutter app with phone number: 9550538735');
+      console.log('1. Login to the Flutter app or Next.js app with phone number: 8309057182');
       console.log('2. Complete phone authentication (OTP verification)');
       console.log('3. Complete profile setup if prompted');
       console.log('4. Run this script again to update the user role to admin');
