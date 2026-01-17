@@ -1,4 +1,4 @@
-import { db, database } from '@/lib/firebase/config';
+import { db } from '@/lib/firebase/config';
 import { COLLECTIONS } from '@/lib/firebase/collections';
 import { ChatRoom } from '@/types';
 import { FieldValue } from 'firebase-admin/firestore';

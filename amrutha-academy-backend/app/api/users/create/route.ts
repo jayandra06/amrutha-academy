@@ -10,8 +10,12 @@ export async function POST(request: NextRequest) {
     // Check if Firebase is initialized
     if (!db) {
       console.error('Firebase database not initialized');
+      console.error('Please ensure:');
+      console.error('  1. Service account JSON file exists in backend root, OR');
+      console.error('  2. GOOGLE_APPLICATION_CREDENTIALS env var is set, OR');
+      console.error('  3. FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY env vars are set');
       return NextResponse.json(
-        createErrorResponse('Database not initialized. Check Firebase configuration.', 500),
+        createErrorResponse('Database not initialized. Check Firebase configuration. See server logs for details.', 500),
         { 
           status: 500,
           headers: {
@@ -197,11 +201,22 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Error creating user:', error);
-    console.error('Error stack:', error.stack);
+    console.error('Error name:', error?.name);
+    console.error('Error code:', error?.code);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack);
     
     // Ensure we always return a valid JSON response
-    const errorMessage = error?.message || 'Failed to create user';
+    let errorMessage = 'Failed to create user';
+    if (error?.message) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    
     const errorResponse = createErrorResponse(errorMessage, 500);
+    
+    console.log('Returning error response:', JSON.stringify(errorResponse));
     
     return NextResponse.json(errorResponse, { 
       status: 500,

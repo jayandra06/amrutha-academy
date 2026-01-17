@@ -4,11 +4,13 @@ import { getAuth, Auth } from 'firebase/auth';
 
 // Firebase web app configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBQ1x6bwLTxKn3WGHtTc3ClD451JiSuciw",
+  apiKey: "AIzaSyCnsK2ePZBa_iqXa706_BcIBSP-F0SVv70",
   authDomain: "amrutha-academy.firebaseapp.com",
   projectId: "amrutha-academy",
   storageBucket: "amrutha-academy.firebasestorage.app",
   messagingSenderId: "349596859394",
+  appId: "1:349596859394:web:8038398eb110ef689c7b1b",
+  measurementId: "G-EB9V1VLJBK",
   databaseURL: "https://amrutha-academy-default-rtdb.firebaseio.com"
 };
 

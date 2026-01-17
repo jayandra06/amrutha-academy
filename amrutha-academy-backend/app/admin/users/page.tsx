@@ -39,26 +39,47 @@ export default function CreateUserPage() {
       let responseText = '';
       
       try {
+        // Get response as text first
         responseText = await response.text();
-        console.log('Response text:', responseText);
+        console.log('Response status:', response.status, response.statusText);
+        console.log('Response text length:', responseText.length);
+        console.log('Response text (first 500 chars):', responseText.substring(0, 500));
         
         if (responseText && responseText.trim()) {
-          data = JSON.parse(responseText);
+          try {
+            data = JSON.parse(responseText);
+            console.log('Parsed response data:', data);
+          } catch (parseError: any) {
+            console.error('Failed to parse JSON response:', parseError);
+            console.error('Raw response text:', responseText);
+            // If JSON parsing fails, try to extract error from text
+            data = { 
+              error: `Invalid response format: ${responseText.substring(0, 100)}`,
+              rawResponse: responseText,
+              parseError: parseError.message
+            };
+          }
         } else {
           console.warn('Empty response body received');
-          data = { error: 'Empty response from server' };
+          console.warn('Response headers:', Object.fromEntries(response.headers.entries()));
+          data = { 
+            error: 'Empty response from server. Please check server logs.',
+            status: response.status,
+            statusText: response.statusText
+          };
         }
-      } catch (parseError: any) {
-        console.error('Failed to parse response:', parseError);
-        console.error('Raw response text:', responseText);
+      } catch (error: any) {
+        console.error('Error reading response:', error);
+        console.error('Error stack:', error.stack);
         data = { 
-          error: `Failed to parse response: ${parseError.message}`,
-          rawResponse: responseText.substring(0, 500) // First 500 chars
+          error: `Failed to read response: ${error.message}`,
+          errorType: error.name
         };
       }
 
       if (response.ok) {
-        setMessage({ type: 'success', text: data.message?.[0] || data.message || 'User created successfully!' });
+        const successMessage = data.message?.[0] || data.message || data.data?.message || 'User created successfully!';
+        setMessage({ type: 'success', text: successMessage });
         // Reset form
         setFormData({
           fullName: '',
@@ -72,18 +93,38 @@ export default function CreateUserPage() {
       } else {
         // Extract error message from API response
         // The error structure is: { statusCode, error, data: null }
-        const errorMessage = data.error || data.message?.[0] || data.message || `Failed to create user (${response.status} ${response.statusText})`;
+        let errorMessage = 'Unknown error occurred';
+        
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          errorMessage = data.error || 
+                        data.message?.[0] || 
+                        data.message || 
+                        `Failed to create user (${response.status} ${response.statusText})`;
+        } else if (responseText && responseText.trim()) {
+          // If data is empty but responseText exists, use it
+          errorMessage = responseText.substring(0, 200);
+        } else {
+          // Fallback error message
+          errorMessage = `Failed to create user. Server returned ${response.status} ${response.statusText}. Please check server logs.`;
+        }
+        
         setMessage({ type: 'error', text: errorMessage });
         
-        // Only log detailed error in development
-        if (process.env.NODE_ENV === 'development') {
-          console.error('API Error Response:', {
-            status: response.status,
-            statusText: response.statusText,
-            data,
-            rawResponse: responseText.substring(0, 200), // First 200 chars
-          });
-        }
+        // Always log detailed error (not just in development)
+        console.error('API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          headers: Object.fromEntries(response.headers.entries()),
+          data: data,
+          dataType: typeof data,
+          dataKeys: data && typeof data === 'object' ? Object.keys(data) : [],
+          dataStringified: JSON.stringify(data),
+          responseText: responseText ? responseText.substring(0, 500) : '(empty)',
+          responseTextLength: responseText?.length || 0,
+          hasData: !!data,
+          dataIsEmpty: data && typeof data === 'object' && Object.keys(data).length === 0,
+        });
       }
     } catch (error: any) {
       const errorMessage = error.message || 'An error occurred while creating user';
