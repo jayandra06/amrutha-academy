@@ -6,7 +6,7 @@ import '../../../data/models/user_model.dart';
 import '../../../core/config/di_config.dart';
 import 'package:get_it/get_it.dart';
 import '../auth/phone_auth_screen.dart';
-import '../home/home_screen.dart';
+import '../main/main_navigation_screen.dart';
 import '../profile/profile_completion_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -54,9 +54,9 @@ class _SplashScreenState extends State<SplashScreen> {
                 MaterialPageRoute(builder: (_) => const ProfileCompletionScreen()),
               );
             } else {
-              // Profile complete - go to home screen
+              // Profile complete - go to main navigation screen
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const HomeScreen()),
+                MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
               );
             }
           } else {
@@ -67,10 +67,10 @@ class _SplashScreenState extends State<SplashScreen> {
           }
         } catch (e) {
           print('Error fetching user profile: $e');
-          // On error, go to home screen and let it handle the state
+          // On error, go to main navigation screen and let it handle the state
           if (mounted) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
             );
           }
         }

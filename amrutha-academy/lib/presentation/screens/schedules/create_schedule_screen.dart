@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/api_service.dart';
 import '../../../data/models/api_response.dart';
 import '../../../core/config/di_config.dart';
+import '../../../core/config/firebase_config.dart';
+import '../../widgets/app_drawer.dart';
 import 'package:get_it/get_it.dart';
 
 class CreateScheduleScreen extends StatefulWidget {
@@ -29,6 +32,11 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
   void initState() {
     super.initState();
     _selectedCourseId = widget.courseId;
+    // Set trainer ID to current user if they are a trainer
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      _trainerId = currentUser.uid;
+    }
   }
 
   Future<void> _selectDate() async {
@@ -143,8 +151,9 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('Create Schedule'),
+        title: const Text('Create Class'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

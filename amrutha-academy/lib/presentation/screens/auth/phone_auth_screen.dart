@@ -6,7 +6,7 @@ import '../../../data/models/api_response.dart';
 import '../../../data/models/user_model.dart';
 import 'package:get_it/get_it.dart';
 import '../profile/profile_completion_screen.dart';
-import '../home/home_screen.dart';
+import '../main/main_navigation_screen.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -147,9 +147,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             MaterialPageRoute(builder: (_) => const ProfileCompletionScreen()),
           );
         } else {
-          // Profile complete - go to home screen
+          // Profile complete - go to main navigation screen
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
+            MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
           );
         }
       } else {

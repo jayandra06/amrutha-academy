@@ -5,6 +5,7 @@ import '../../../data/repositories/course_repository.dart';
 import '../../../data/models/enrollment_model.dart';
 import '../../../data/models/course_model.dart';
 import '../../widgets/course_card.dart';
+import '../../widgets/app_drawer.dart';
 import '../courses/course_list_screen.dart';
 import '../courses/course_detail_screen.dart';
 import '../classes/upcoming_classes_screen.dart';
@@ -100,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Amrutha Academy'),
         actions: [

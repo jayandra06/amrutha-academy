@@ -205,7 +205,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                           radius: 16,
                                           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                                           child: Text(
-                                            message.userName[0].toUpperCase(),
+                                            message.userName.isNotEmpty
+                                                ? message.userName[0].toUpperCase()
+                                                : 'U',
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -258,7 +260,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                           radius: 16,
                                           backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
                                           child: Text(
-                                            message.userName[0].toUpperCase(),
+                                            message.userName.isNotEmpty
+                                                ? message.userName[0].toUpperCase()
+                                                : 'U',
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Theme.of(context).colorScheme.onSecondaryContainer,
