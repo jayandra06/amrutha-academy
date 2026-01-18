@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../schedules/create_schedule_screen.dart';
+import '../classes/upcoming_classes_screen.dart';
+import '../classes/class_history_screen.dart';
+import '../attendance/attendance_screen.dart';
+import '../../widgets/app_drawer.dart';
 
 class TrainerDashboardScreen extends StatelessWidget {
   const TrainerDashboardScreen({super.key});
@@ -7,6 +11,7 @@ class TrainerDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: AppDrawer(),
       appBar: AppBar(
         title: const Text('Trainer Dashboard'),
       ),
@@ -22,7 +27,10 @@ class TrainerDashboardScreen extends StatelessWidget {
             Icons.class_,
             Colors.blue,
             () {
-              // Navigate to classes
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UpcomingClassesScreen()),
+              );
             },
           ),
           _buildDashboardCard(
@@ -43,16 +51,22 @@ class TrainerDashboardScreen extends StatelessWidget {
             Icons.check_circle,
             Colors.orange,
             () {
-              // Navigate to attendance
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AttendanceScreen()),
+              );
             },
           ),
           _buildDashboardCard(
             context,
-            'View Students',
-            Icons.people,
+            'Class History',
+            Icons.history,
             Colors.purple,
             () {
-              // Navigate to students
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ClassHistoryScreen()),
+              );
             },
           ),
         ],

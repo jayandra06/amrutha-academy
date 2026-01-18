@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
-import '../../../data/models/user_model.dart';
-import '../../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
+import '../../../core/config/firebase_config.dart';
 import '../auth/phone_auth_screen.dart';
 import '../main/main_navigation_screen.dart';
 import '../profile/profile_completion_screen.dart';
@@ -24,7 +20,9 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkAuthState() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // Remove artificial delay - check immediately
+    // Only add minimal delay for smooth UI transition (100ms)
+    await Future.delayed(const Duration(milliseconds: 100));
     
     if (!mounted) return;
 
@@ -34,19 +32,18 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
       
       if (user != null) {
-        // User is logged in - check profile completion
+        // User is logged in - check profile from Firestore directly (faster than API call)
         try {
-          final apiService = GetIt.instance<ApiService>();
-          final response = await apiService.get<UserModel>(
-            '/profile',
-            fromJson: (json) => UserModel.fromJson(json),
-          );
-
+          final userDoc = await FirebaseConfig.firestore
+              ?.collection('users')
+              .doc(user.uid)
+              .get();
+          
           if (!mounted) return;
 
-          if (response.isSuccess && response.data != null) {
-            final userProfile = response.data!;
-            final fullName = userProfile.fullName.trim();
+          if (userDoc?.exists ?? false) {
+            final userData = userDoc!.data()!;
+            final fullName = (userData['fullName'] ?? '').toString().trim();
             
             if (fullName.isEmpty) {
               // Profile not complete - redirect to profile completion
@@ -60,13 +57,13 @@ class _SplashScreenState extends State<SplashScreen> {
               );
             }
           } else {
-            // If profile fetch fails, assume incomplete and redirect to profile completion
+            // User document doesn't exist - redirect to profile completion
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const ProfileCompletionScreen()),
             );
           }
         } catch (e) {
-          print('Error fetching user profile: $e');
+          print('Error checking user profile: $e');
           // On error, go to main navigation screen and let it handle the state
           if (mounted) {
             Navigator.of(context).pushReplacement(

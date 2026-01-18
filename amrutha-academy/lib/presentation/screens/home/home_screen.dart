@@ -29,36 +29,117 @@ class _HomeScreenState extends State<HomeScreen> {
   List<EnrollmentModel> _enrollments = [];
   Map<String, CourseModel> _courseMap = {};
   bool _isLoading = true;
+  bool _isLoadingUser = true; // Separate flag for user loading
   String? _errorMessage;
   UserModel? _currentUser;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
-    _loadEnrollments();
+    // Load user profile first (required to determine which dashboard to show)
+    // Then load enrollments in parallel
+    _loadUserProfile().then((_) {
+      if (mounted) {
+        _loadEnrollments();
+      }
+    });
   }
 
   Future<void> _loadUserProfile() async {
+    setState(() {
+      _isLoadingUser = true;
+    });
+    
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+        print('🔍 HomeScreen - Loading user profile for UID: ${user.uid}');
         final userDoc = await FirebaseConfig.firestore?.collection('users').doc(user.uid).get();
         if (userDoc?.exists ?? false) {
-          setState(() {
-            _currentUser = UserModel.fromJson({
-              'id': user.uid,
-              ...userDoc!.data()!,
-            });
+          final userData = userDoc!.data()!;
+          print('🔍 HomeScreen - User data loaded:');
+          print('   Role: ${userData['role']}');
+          print('   Full data: $userData');
+          
+          if (!mounted) return;
+          final loadedUser = UserModel.fromJson({
+            'id': user.uid,
+            ...userData,
           });
+          
+          print('🔍 HomeScreen - Parsed user:');
+          print('   Role: ${loadedUser.role}');
+          print('   isAdmin: ${loadedUser.isAdmin}');
+          print('   isTrainer: ${loadedUser.isTrainer}');
+          
+          setState(() {
+            _currentUser = loadedUser;
+            _isLoadingUser = false;
+          });
+        } else {
+          print('⚠️ HomeScreen - User document not found in Firestore');
+          print('   Attempting to create user document as fallback...');
+          
+          // Fallback: Create user document if it doesn't exist
+          try {
+            final phoneNumber = user.phoneNumber ?? '';
+            final userData = {
+              'phoneNumber': phoneNumber,
+              'fullName': '',
+              'email': user.email ?? '',
+              'avatar': '',
+              'bio': '',
+              'birthday': '',
+              'location': '',
+              'role': 'student', // Default role
+              'createdAt': DateTime.now().toIso8601String(),
+              'updatedAt': DateTime.now().toIso8601String(),
+            };
+            
+            await FirebaseConfig.firestore!
+                .collection('users')
+                .doc(user.uid)
+                .set(userData);
+            
+            print('✅ HomeScreen - Created user document with default role: student');
+            
+            // Reload the user data
+            final createdUser = UserModel.fromJson({
+              'id': user.uid,
+              ...userData,
+            });
+            
+            if (!mounted) return;
+            setState(() {
+              _currentUser = createdUser;
+              _isLoadingUser = false;
+            });
+          } catch (createError) {
+            print('❌ HomeScreen - Failed to create user document: $createError');
+            if (!mounted) return;
+            setState(() {
+              _isLoadingUser = false;
+            });
+          }
         }
+      } else {
+        print('⚠️ HomeScreen - No current user in Firebase Auth');
+        if (!mounted) return;
+        setState(() {
+          _isLoadingUser = false;
+        });
       }
     } catch (e) {
-      print('Error loading user profile: $e');
+      print('❌ HomeScreen - Error loading user profile: $e');
+      if (!mounted) return;
+      setState(() {
+        _isLoadingUser = false;
+      });
     }
   }
 
   Future<void> _loadEnrollments() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -70,18 +151,21 @@ class _HomeScreenState extends State<HomeScreen> {
       // Load course details for each enrollment
       final courseMap = <String, CourseModel>{};
       for (final enrollment in enrollments) {
+        if (!mounted) return;
         final course = await _courseRepository.getCourseById(enrollment.courseId);
         if (course != null) {
           courseMap[enrollment.courseId] = course;
         }
       }
 
+      if (!mounted) return;
       setState(() {
         _enrollments = enrollments;
         _courseMap = courseMap;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to load enrollments: $e';
         _isLoading = false;
@@ -91,6 +175,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading while user profile is being loaded (required to determine dashboard)
+    if (_isLoadingUser) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Loading...',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // Check if user is admin or trainer and show appropriate dashboard
     if (_currentUser != null) {
       if (_currentUser!.isAdmin) {
@@ -100,8 +203,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
+    // Default to student home screen
     return Scaffold(
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(),
       appBar: AppBar(
         title: const Text('Amrutha Academy'),
         actions: [

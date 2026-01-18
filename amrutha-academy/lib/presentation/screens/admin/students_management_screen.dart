@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/firebase_config.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/models/course_model.dart';
+import '../../../data/models/enrollment_model.dart';
+import '../../../data/repositories/course_repository.dart';
+import '../../../data/repositories/enrollment_repository.dart';
 import '../../widgets/app_drawer.dart';
+import 'create_student_screen.dart';
 
 class StudentsManagementScreen extends StatefulWidget {
   const StudentsManagementScreen({super.key});
@@ -11,23 +16,50 @@ class StudentsManagementScreen extends StatefulWidget {
 }
 
 class _StudentsManagementScreenState extends State<StudentsManagementScreen> {
-  List<UserModel> _students = [];
+  final _searchController = TextEditingController();
+  final _courseRepository = CourseRepository();
+  final _enrollmentRepository = EnrollmentRepository();
+  
+  List<UserModel> _allStudents = [];
+  List<UserModel> _filteredStudents = [];
+  List<CourseModel> _courses = [];
+  Map<String, CourseModel> _courseMap = {};
+  Map<String, List<EnrollmentModel>> _studentEnrollments = {};
+  
   bool _isLoading = true;
   String? _errorMessage;
+  String? _selectedLevel;
+  String? _selectedCourseId;
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _loadStudents();
+    _loadData();
+    _searchController.addListener(_onSearchChanged);
   }
 
-  Future<void> _loadStudents() async {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+      _applyFilters();
+    });
+  }
+
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
+      // Load students
       final usersSnapshot = await FirebaseConfig.firestore
           ?.collection('users')
           .where('role', isEqualTo: 'student')
@@ -41,13 +73,35 @@ class _StudentsManagementScreenState extends State<StudentsManagementScreen> {
                 }))
             .toList();
 
+        // Load courses for filtering
+        final courses = await _courseRepository.getAllCourses();
+        final courseMap = <String, CourseModel>{};
+        for (var course in courses) {
+          courseMap[course.id] = course;
+        }
+
+        // Load enrollments to get student-course relationships
+        final enrollmentsMap = <String, List<EnrollmentModel>>{};
+        for (var student in students) {
+          try {
+            final enrollments = await _enrollmentRepository.getEnrollmentsByUserId(student.id);
+            enrollmentsMap[student.id] = enrollments;
+          } catch (e) {
+            enrollmentsMap[student.id] = [];
+          }
+        }
+
         setState(() {
-          _students = students;
+          _allStudents = students;
+          _courses = courses;
+          _courseMap = courseMap;
+          _studentEnrollments = enrollmentsMap;
           _isLoading = false;
         });
+        _applyFilters();
       } else {
         setState(() {
-          _students = [];
+          _allStudents = [];
           _isLoading = false;
         });
       }
@@ -59,92 +113,287 @@ class _StudentsManagementScreenState extends State<StudentsManagementScreen> {
     }
   }
 
+  void _applyFilters() {
+    List<UserModel> filtered = List.from(_allStudents);
+
+    // Apply search filter
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((student) {
+        final nameMatch = student.fullName.toLowerCase().contains(_searchQuery);
+        final phoneMatch = student.phoneNumber.contains(_searchQuery);
+        final emailMatch = student.email.toLowerCase().contains(_searchQuery);
+        return nameMatch || phoneMatch || emailMatch;
+      }).toList();
+    }
+
+    // Apply level filter
+    if (_selectedLevel != null) {
+      filtered = filtered.where((student) {
+        final enrollments = _studentEnrollments[student.id] ?? [];
+        return enrollments.any((enrollment) {
+          final course = _courseMap[enrollment.courseId];
+          return course != null && course.level.toString() == _selectedLevel;
+        });
+      }).toList();
+    }
+
+    // Apply course filter
+    if (_selectedCourseId != null && _selectedCourseId!.isNotEmpty) {
+      filtered = filtered.where((student) {
+        final enrollments = _studentEnrollments[student.id] ?? [];
+        return enrollments.any((enrollment) => enrollment.courseId == _selectedCourseId);
+      }).toList();
+    }
+
+    setState(() {
+      _filteredStudents = filtered;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(),
       appBar: AppBar(
-        title: const Text('Students'),
+        title: const Text('Students Management'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CreateStudentScreen()),
+              );
+              if (result == true) {
+                _loadData();
+              }
+            },
+            tooltip: 'Add Student',
+          ),
+        ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadStudents,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _errorMessage!,
-                          style: TextStyle(color: Theme.of(context).colorScheme.error),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadStudents,
-                          child: const Text('Retry'),
-                        ),
-                      ],
+      body: Column(
+        children: [
+          // Search and Filters
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Theme.of(context).colorScheme.surface,
+            child: Column(
+              children: [
+                // Search bar
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search by name, phone, or email',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  )
-                : _students.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.people_outline,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No students found',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Filters
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedLevel,
+                        decoration: const InputDecoration(
+                          labelText: 'Filter by Level',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _students.length,
-                        itemBuilder: (context, index) {
-                          final student = _students[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                                child: Text(
-                                  student.fullName.isNotEmpty
-                                      ? student.fullName[0].toUpperCase()
-                                      : 'S',
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                student.fullName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(student.email),
-                                  if (student.phoneNumber.isNotEmpty)
-                                    Text(student.phoneNumber),
-                                ],
-                              ),
-                              trailing: const Icon(Icons.chevron_right),
-                              isThreeLine: student.phoneNumber.isNotEmpty,
-                            ),
-                          );
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('All Levels')),
+                          const DropdownMenuItem(value: '1', child: Text('Level 1')),
+                          const DropdownMenuItem(value: '2', child: Text('Level 2')),
+                          const DropdownMenuItem(value: '3', child: Text('Level 3')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedLevel = value;
+                          });
+                          _applyFilters();
                         },
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedCourseId,
+                        decoration: const InputDecoration(
+                          labelText: 'Filter by Course',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('All Courses')),
+                          ..._courses.map((course) => DropdownMenuItem(
+                                value: course.id,
+                                child: Text(
+                                  course.title,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCourseId = value;
+                          });
+                          _applyFilters();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Results count
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${_filteredStudents.length} student${_filteredStudents.length != 1 ? 's' : ''}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (_selectedLevel != null || _selectedCourseId != null || _searchQuery.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _selectedLevel = null;
+                        _selectedCourseId = null;
+                        _searchController.clear();
+                      });
+                      _applyFilters();
+                    },
+                    icon: const Icon(Icons.clear_all, size: 18),
+                    label: const Text('Clear Filters'),
+                  ),
+              ],
+            ),
+          ),
+          // Students list
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadData,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _errorMessage!,
+                                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadData,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _filteredStudents.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.people_outline,
+                                    size: 64,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _searchQuery.isNotEmpty || _selectedLevel != null || _selectedCourseId != null
+                                        ? 'No students match the filters'
+                                        : 'No students found',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _filteredStudents.length,
+                              itemBuilder: (context, index) {
+                                final student = _filteredStudents[index];
+                                final enrollments = _studentEnrollments[student.id] ?? [];
+                                final enrolledCourses = enrollments
+                                    .map((e) => _courseMap[e.courseId])
+                                    .whereType<CourseModel>()
+                                    .toList();
+
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                      child: Text(
+                                        student.fullName.isNotEmpty
+                                            ? student.fullName[0].toUpperCase()
+                                            : 'S',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      student.fullName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (student.email.isNotEmpty) Text(student.email),
+                                        if (student.phoneNumber.isNotEmpty) Text(student.phoneNumber),
+                                        if (enrolledCourses.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Wrap(
+                                              spacing: 4,
+                                              children: enrolledCourses.map((course) {
+                                                return Chip(
+                                                  label: Text(
+                                                    'L${course.level}',
+                                                    style: const TextStyle(fontSize: 10),
+                                                  ),
+                                                  padding: EdgeInsets.zero,
+                                                  visualDensity: VisualDensity.compact,
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    trailing: const Icon(Icons.chevron_right),
+                                    isThreeLine: true,
+                                    onTap: () {
+                                      // TODO: Navigate to student details screen
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-

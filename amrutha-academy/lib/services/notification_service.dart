@@ -1,9 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:get_it/get_it.dart';
 import '../core/config/firebase_config.dart';
-import 'api_service.dart';
-import '../core/config/di_config.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -49,24 +46,20 @@ class NotificationService {
 
   Future<void> _sendTokenToBackend(String token) async {
     try {
-      // Try to get ApiService - if GetIt isn't ready, catch and retry later
-      final apiService = GetIt.instance<ApiService>();
-      await apiService.post(
-        '/notifications/register-token',
-        data: {'fcmToken': token},
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-      print('FCM Token sent to backend: $token');
-    } on StateError catch (e) {
-      // GetIt not registered yet - retry after delay
-      if (e.message.contains('not registered')) {
-        print('GetIt not ready yet, will retry FCM token send later.');
-        Future.delayed(const Duration(seconds: 2), () {
-          _sendTokenToBackend(token);
-        });
+      // Save FCM token directly to Firestore
+      final currentUser = FirebaseConfig.auth?.currentUser;
+      if (currentUser != null && FirebaseConfig.firestore != null) {
+        await FirebaseConfig.firestore!
+            .collection('users')
+            .doc(currentUser.uid)
+            .update({
+              'fcmToken': token,
+              'fcmTokenUpdatedAt': DateTime.now().toIso8601String(),
+            });
+        print('FCM Token saved to Firestore: $token');
       }
     } catch (e) {
-      print('Failed to send FCM token to backend: $e');
+      print('Failed to save FCM token to Firestore: $e');
       // Don't throw - this is not critical for app functionality
     }
   }

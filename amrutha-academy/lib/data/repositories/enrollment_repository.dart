@@ -46,5 +46,27 @@ class EnrollmentRepository {
       return null;
     }
   }
+
+  Future<List<EnrollmentModel>> getEnrollmentsByUserId(String userId) async {
+    try {
+      final response = await _apiService.get<List<EnrollmentModel>>(
+        '/courses/enrollments?userId=$userId',
+        fromJson: (json) {
+          if (json is List) {
+            return (json as List).map((item) => EnrollmentModel.fromJson(item as Map<String, dynamic>)).toList();
+          }
+          return [];
+        },
+      );
+
+      if (response.isSuccess && response.data != null) {
+        return response.data!;
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching enrollments: $e');
+      return [];
+    }
+  }
 }
 

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
 import '../../../data/models/schedule_model.dart';
-import '../../../core/config/di_config.dart';
+import '../../../data/repositories/schedule_repository.dart';
 import '../../widgets/app_drawer.dart';
-import 'package:get_it/get_it.dart';
 
 class ClassHistoryScreen extends StatefulWidget {
   const ClassHistoryScreen({super.key});
@@ -14,7 +11,7 @@ class ClassHistoryScreen extends StatefulWidget {
 }
 
 class _ClassHistoryScreenState extends State<ClassHistoryScreen> {
-  final _apiService = GetIt.instance<ApiService>();
+  final _scheduleRepository = ScheduleRepository();
   List<ScheduleModel> _pastClasses = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -32,34 +29,12 @@ class _ClassHistoryScreenState extends State<ClassHistoryScreen> {
     });
 
     try {
-      // Load all schedules and filter past ones
-      final response = await _apiService.get<List<ScheduleModel>>(
-        '/schedules/upcoming',
-        fromJson: (json) {
-          if (json is List) {
-            return (json as List)
-                .map((item) => ScheduleModel.fromJson(item as Map<String, dynamic>))
-                .toList();
-          }
-          return [];
-        },
-      );
+      final pastClasses = await _scheduleRepository.getPastSchedules();
 
-      if (response.isSuccess && response.data != null) {
-        final now = DateTime.now();
-        setState(() {
-          _pastClasses = response.data!
-              .where((schedule) => schedule.endTime.isBefore(now))
-              .toList()
-            ..sort((a, b) => b.startTime.compareTo(a.startTime)); // Most recent first
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = response.error ?? 'Failed to load class history';
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _pastClasses = pastClasses;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _errorMessage = 'Error: $e';

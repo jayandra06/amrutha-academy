@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/firebase_config.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/models/course_model.dart';
+import '../../../data/repositories/course_repository.dart';
 import '../../widgets/app_drawer.dart';
+import 'create_trainer_screen.dart';
 
 class TrainersManagementScreen extends StatefulWidget {
   const TrainersManagementScreen({super.key});
@@ -11,23 +14,48 @@ class TrainersManagementScreen extends StatefulWidget {
 }
 
 class _TrainersManagementScreenState extends State<TrainersManagementScreen> {
-  List<UserModel> _trainers = [];
+  final _searchController = TextEditingController();
+  final _courseRepository = CourseRepository();
+  
+  List<UserModel> _allTrainers = [];
+  List<UserModel> _filteredTrainers = [];
+  List<CourseModel> _courses = [];
+  Map<String, List<CourseModel>> _trainerCourses = {};
+  
   bool _isLoading = true;
   String? _errorMessage;
+  String? _selectedLevel;
+  String? _selectedCourseId;
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _loadTrainers();
+    _loadData();
+    _searchController.addListener(_onSearchChanged);
   }
 
-  Future<void> _loadTrainers() async {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+      _applyFilters();
+    });
+  }
+
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
+      // Load trainers
       final usersSnapshot = await FirebaseConfig.firestore
           ?.collection('users')
           .where('role', isEqualTo: 'trainer')
@@ -41,13 +69,27 @@ class _TrainersManagementScreenState extends State<TrainersManagementScreen> {
                 }))
             .toList();
 
+        // Load courses for filtering
+        final courses = await _courseRepository.getAllCourses();
+        
+        // Map courses to trainers
+        final trainerCoursesMap = <String, List<CourseModel>>{};
+        for (var trainer in trainers) {
+          trainerCoursesMap[trainer.id] = courses
+              .where((course) => course.trainerId == trainer.id)
+              .toList();
+        }
+
         setState(() {
-          _trainers = trainers;
+          _allTrainers = trainers;
+          _courses = courses;
+          _trainerCourses = trainerCoursesMap;
           _isLoading = false;
         });
+        _applyFilters();
       } else {
         setState(() {
-          _trainers = [];
+          _allTrainers = [];
           _isLoading = false;
         });
       }
@@ -59,102 +101,283 @@ class _TrainersManagementScreenState extends State<TrainersManagementScreen> {
     }
   }
 
+  void _applyFilters() {
+    List<UserModel> filtered = List.from(_allTrainers);
+
+    // Apply search filter
+    if (_searchQuery.isNotEmpty) {
+      filtered = filtered.where((trainer) {
+        final nameMatch = trainer.fullName.toLowerCase().contains(_searchQuery);
+        final phoneMatch = trainer.phoneNumber.contains(_searchQuery);
+        final emailMatch = trainer.email.toLowerCase().contains(_searchQuery);
+        return nameMatch || phoneMatch || emailMatch;
+      }).toList();
+    }
+
+    // Apply level filter
+    if (_selectedLevel != null) {
+      filtered = filtered.where((trainer) {
+        final courses = _trainerCourses[trainer.id] ?? [];
+        return courses.any((course) => course.level.toString() == _selectedLevel);
+      }).toList();
+    }
+
+    // Apply course filter
+    if (_selectedCourseId != null && _selectedCourseId!.isNotEmpty) {
+      filtered = filtered.where((trainer) {
+        final courses = _trainerCourses[trainer.id] ?? [];
+        return courses.any((course) => course.id == _selectedCourseId);
+      }).toList();
+    }
+
+    setState(() {
+      _filteredTrainers = filtered;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(),
       appBar: AppBar(
-        title: const Text('Trainers'),
+        title: const Text('Trainers Management'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CreateTrainerScreen()),
+              );
+              if (result == true) {
+                _loadData();
+              }
+            },
+            tooltip: 'Add Trainer',
+          ),
+        ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadTrainers,
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _errorMessage!,
-                          style: TextStyle(color: Theme.of(context).colorScheme.error),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _loadTrainers,
-                          child: const Text('Retry'),
-                        ),
-                      ],
+      body: Column(
+        children: [
+          // Search and Filters
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Theme.of(context).colorScheme.surface,
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search by name, phone, or email',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  )
-                : _trainers.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.person_outline,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No trainers found',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedLevel,
+                        decoration: const InputDecoration(
+                          labelText: 'Filter by Level',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _trainers.length,
-                        itemBuilder: (context, index) {
-                          final trainer = _trainers[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                                child: Text(
-                                  trainer.fullName.isNotEmpty
-                                      ? trainer.fullName[0].toUpperCase()
-                                      : 'T',
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSecondaryContainer,
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                trainer.fullName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(trainer.email),
-                                  if (trainer.phoneNumber.isNotEmpty)
-                                    Text(trainer.phoneNumber),
-                                  if (trainer.bio != null && trainer.bio!.isNotEmpty)
-                                    Text(
-                                      trainer.bio!,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              trailing: const Icon(Icons.chevron_right),
-                              isThreeLine: true,
-                            ),
-                          );
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('All Levels')),
+                          const DropdownMenuItem(value: '1', child: Text('Level 1')),
+                          const DropdownMenuItem(value: '2', child: Text('Level 2')),
+                          const DropdownMenuItem(value: '3', child: Text('Level 3')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedLevel = value;
+                          });
+                          _applyFilters();
                         },
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedCourseId,
+                        decoration: const InputDecoration(
+                          labelText: 'Filter by Course',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('All Courses')),
+                          ..._courses.map((course) => DropdownMenuItem(
+                                value: course.id,
+                                child: Text(
+                                  course.title,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCourseId = value;
+                          });
+                          _applyFilters();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${_filteredTrainers.length} trainer${_filteredTrainers.length != 1 ? 's' : ''}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (_selectedLevel != null || _selectedCourseId != null || _searchQuery.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _selectedLevel = null;
+                        _selectedCourseId = null;
+                        _searchController.clear();
+                      });
+                      _applyFilters();
+                    },
+                    icon: const Icon(Icons.clear_all, size: 18),
+                    label: const Text('Clear Filters'),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadData,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _errorMessage!,
+                                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadData,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _filteredTrainers.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.person_outline,
+                                    size: 64,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _searchQuery.isNotEmpty || _selectedLevel != null || _selectedCourseId != null
+                                        ? 'No trainers match the filters'
+                                        : 'No trainers found',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _filteredTrainers.length,
+                              itemBuilder: (context, index) {
+                                final trainer = _filteredTrainers[index];
+                                final courses = _trainerCourses[trainer.id] ?? [];
+
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                                      child: Text(
+                                        trainer.fullName.isNotEmpty
+                                            ? trainer.fullName[0].toUpperCase()
+                                            : 'T',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      trainer.fullName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (trainer.email.isNotEmpty) Text(trainer.email),
+                                        if (trainer.phoneNumber.isNotEmpty) Text(trainer.phoneNumber),
+                                        if (trainer.bio != null && trainer.bio!.isNotEmpty)
+                                          Text(
+                                            trainer.bio!,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        if (courses.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Wrap(
+                                              spacing: 4,
+                                              children: courses.map((course) {
+                                                return Chip(
+                                                  label: Text(
+                                                    'L${course.level}',
+                                                    style: const TextStyle(fontSize: 10),
+                                                  ),
+                                                  padding: EdgeInsets.zero,
+                                                  visualDensity: VisualDensity.compact,
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    trailing: const Icon(Icons.chevron_right),
+                                    isThreeLine: true,
+                                  ),
+                                );
+                              },
+                            ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-

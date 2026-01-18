@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
-import '../../../core/config/di_config.dart';
 import '../../../core/config/firebase_config.dart';
+import '../../../data/repositories/schedule_repository.dart';
 import '../../widgets/app_drawer.dart';
-import 'package:get_it/get_it.dart';
 
 class CreateScheduleScreen extends StatefulWidget {
   final String? courseId;
@@ -18,7 +15,7 @@ class CreateScheduleScreen extends StatefulWidget {
 
 class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _apiService = GetIt.instance<ApiService>();
+  final _scheduleRepository = ScheduleRepository();
 
   String? _selectedCourseId;
   String? _trainerId;
@@ -115,28 +112,30 @@ class _CreateScheduleScreenState extends State<CreateScheduleScreen> {
     });
 
     try {
-      final response = await _apiService.post<Map<String, dynamic>>(
-        '/schedules/create',
-        data: {
-          'courseId': _selectedCourseId,
-          'trainerId': _trainerId,
-          'date': _date!.toIso8601String(),
-          'startTime': startDateTime.toIso8601String(),
-          'endTime': endDateTime.toIso8601String(),
-        },
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
+      // Generate Jitsi Meet link
+      final meetingLink = 'https://meet.jit.si/amrutha-${DateTime.now().millisecondsSinceEpoch}';
+
+      final schedule = await _scheduleRepository.createSchedule({
+        'courseId': _selectedCourseId!,
+        'trainerId': _trainerId!,
+        'date': _date!.toIso8601String(),
+        'startTime': startDateTime.toIso8601String(),
+        'endTime': endDateTime.toIso8601String(),
+        'meetingLink': meetingLink,
+        'status': 'scheduled',
+        'attendanceEnabled': true,
+      });
 
       if (!mounted) return;
 
-      if (response.isSuccess) {
+      if (schedule != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Schedule created successfully!')),
         );
         Navigator.pop(context);
       } else {
         setState(() {
-          _errorMessage = response.error ?? 'Failed to create schedule';
+          _errorMessage = 'Failed to create schedule';
           _isLoading = false;
         });
       }

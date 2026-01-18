@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
-import '../../../data/models/schedule_model.dart';
 import '../../../data/models/attendance_model.dart';
-import '../../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
+import '../../../data/repositories/attendance_repository.dart';
 import 'package:intl/intl.dart';
 
 class AttendanceScreen extends StatefulWidget {
@@ -17,7 +13,7 @@ class AttendanceScreen extends StatefulWidget {
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  final _apiService = GetIt.instance<ApiService>();
+  final _attendanceRepository = AttendanceRepository();
   List<AttendanceModel> _attendanceList = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -36,33 +32,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
 
     try {
-      final url = widget.courseId != null
-          ? '/attendance/my-attendance?courseId=${widget.courseId}'
-          : '/attendance/my-attendance';
-
-      final response = await _apiService.get<List<AttendanceModel>>(
-        url,
-        fromJson: (json) {
-          if (json is List) {
-            return json.map((item) => AttendanceModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-          return [];
-        },
+      final attendance = await _attendanceRepository.getMyAttendance(
+        courseId: widget.courseId,
       );
 
       if (!mounted) return;
-
-      if (response.isSuccess && response.data != null) {
-        setState(() {
-          _attendanceList = response.data!;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = response.error ?? 'Failed to load attendance';
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _attendanceList = attendance;
+        _isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {

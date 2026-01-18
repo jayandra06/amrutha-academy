@@ -30,6 +30,7 @@ class _UpcomingClassesScreenState extends State<UpcomingClassesScreen> {
   }
 
   Future<void> _loadSchedules() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -50,6 +51,7 @@ class _UpcomingClassesScreenState extends State<UpcomingClassesScreen> {
         },
       );
 
+      if (!mounted) return;
       if (response.isSuccess && response.data != null) {
         setState(() {
           _schedules = response.data!;
@@ -62,6 +64,7 @@ class _UpcomingClassesScreenState extends State<UpcomingClassesScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error: $e';
         _isLoading = false;
@@ -232,14 +235,18 @@ class _JitsiMeetScreenState extends State<JitsiMeetScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
-            setState(() {
-              _isLoading = true;
-            });
+            if (mounted) {
+              setState(() {
+                _isLoading = true;
+              });
+            }
           },
           onPageFinished: (String url) {
-            setState(() {
-              _isLoading = false;
-            });
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
           },
           onWebResourceError: (WebResourceError error) {
             print('WebView error: ${error.description}');

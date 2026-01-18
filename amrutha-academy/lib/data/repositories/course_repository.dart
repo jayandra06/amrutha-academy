@@ -45,5 +45,27 @@ class CourseRepository {
       return null;
     }
   }
+
+  Future<List<CourseModel>> getAllCourses() async {
+    try {
+      final response = await _apiService.get<List<CourseModel>>(
+        '/courses',
+        fromJson: (json) {
+          if (json is List) {
+            return (json as List).map((item) => CourseModel.fromJson(item as Map<String, dynamic>)).toList();
+          }
+          return [];
+        },
+      );
+
+      if (response.isSuccess && response.data != null) {
+        return response.data!;
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching all courses: $e');
+      return [];
+    }
+  }
 }
 

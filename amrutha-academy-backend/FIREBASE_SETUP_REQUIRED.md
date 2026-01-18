@@ -62,3 +62,4 @@ If you see warnings about Firebase not being initialized, check:
 
 The service account JSON file is intentionally excluded from git for security reasons. Each developer needs to set it up locally.
 
+
