@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:dio/dio.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/config/firebase_config.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
-import '../../../data/models/user_model.dart';
-import 'package:get_it/get_it.dart';
 import '../profile/profile_completion_screen.dart';
 import '../main/main_navigation_screen.dart';
 
@@ -49,32 +45,66 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         formattedPhone = '+91$phoneNumber'; // Default to India +91
       }
 
+      print('📱 Sending OTP to: $formattedPhone');
+      
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: formattedPhone,
         verificationCompleted: (PhoneAuthCredential credential) async {
+          print('✅ Phone verification auto-completed');
           await _signInWithCredential(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
+          print('❌ Phone verification failed: ${e.code} - ${e.message}');
+          String errorMsg = 'Verification failed';
+          
+          // Provide user-friendly error messages
+          switch (e.code) {
+            case 'invalid-phone-number':
+              errorMsg = 'Invalid phone number format. Please check and try again.';
+              break;
+            case 'too-many-requests':
+              errorMsg = 'Too many requests. Please try again later.';
+              break;
+            case 'operation-not-allowed':
+              errorMsg = 'Phone authentication is not enabled in Firebase Console.';
+              break;
+            case 'quota-exceeded':
+              errorMsg = 'SMS quota exceeded. Please try again later.';
+              break;
+            case 'missing-phone-number':
+              errorMsg = 'Phone number is required.';
+              break;
+            default:
+              errorMsg = e.message ?? 'Failed to send OTP. Error: ${e.code}';
+          }
+          
           setState(() {
-            _errorMessage = e.message ?? 'Verification failed';
+            _errorMessage = errorMsg;
             _isLoading = false;
           });
         },
         codeSent: (String verificationId, int? resendToken) {
+          print('✅ OTP code sent successfully. Verification ID received.');
           setState(() {
             _verificationId = verificationId;
             _otpSent = true;
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OTP sent successfully')),
+            const SnackBar(
+              content: Text('OTP sent successfully! Please check your phone.'),
+              backgroundColor: Colors.green,
+            ),
           );
         },
         codeAutoRetrievalTimeout: (String verificationId) {
+          print('⏱️ Auto-retrieval timeout. Verification ID: $verificationId');
           _verificationId = verificationId;
         },
         timeout: const Duration(seconds: 60),
       );
+      
+      print('📱 verifyPhoneNumber call completed');
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to send OTP: $e';
@@ -140,64 +170,135 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
       if (!mounted) return;
 
-      // Verify with backend - manually set the Authorization header since user might not be in FirebaseConfig.auth yet
-      final apiService = GetIt.instance<ApiService>();
-      final dio = GetIt.instance<Dio>();
+      // Check user profile in Firestore
+      if (FirebaseConfig.firestore == null) {
+        throw Exception('Firestore not initialized');
+      }
+
+      final phoneNumber = userCredential.user!.phoneNumber ?? '';
       
-      // Temporarily set the auth header
-      final originalHeaders = Map<String, dynamic>.from(dio.options.headers);
-      dio.options.headers['Authorization'] = 'Bearer $idToken';
-
-      try {
-        // Don't send role preference - backend will use existing user role from database
-        final response = await apiService.post<UserModel>(
-          '/auth/phone/verify-id-token',
-          data: {},
-          fromJson: (json) => UserModel.fromJson(json),
-        );
-
-        if (!mounted) return;
-
-        if (response.isSuccess && response.data != null) {
-          final user = response.data!;
-          
-          // Check if profile is complete (fullName must not be null or empty)
-          final fullName = user.fullName.trim();
-          if (fullName.isEmpty) {
-            // Profile not complete - redirect to profile completion
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const ProfileCompletionScreen()),
-            );
-          } else {
-            // Profile complete - go to main navigation screen
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-            );
-          }
-        } else {
-          if (!mounted) return;
-          setState(() {
-            _errorMessage = response.error ?? 'Authentication failed';
-            _isLoading = false;
-          });
+      // Normalize phone number for comparison (remove spaces, dashes, ensure consistent format)
+      String normalizePhone(String phone) {
+        if (phone.isEmpty) return '';
+        // Remove all spaces, dashes, parentheses
+        String normalized = phone.replaceAll(' ', '').replaceAll('-', '').replaceAll('(', '').replaceAll(')', '');
+        // If it starts with 91 but no +, add +
+        if (normalized.startsWith('91') && !normalized.startsWith('+91') && normalized.length >= 10) {
+          normalized = '+$normalized';
         }
-      } finally {
-        // Restore original headers
-        dio.options.headers.clear();
-        dio.options.headers.addAll(originalHeaders);
+        // If it doesn't start with + and has 10 digits, assume +91
+        if (!normalized.startsWith('+') && normalized.length == 10 && RegExp(r'^\d{10}$').hasMatch(normalized)) {
+          normalized = '+91$normalized';
+        }
+        return normalized.toLowerCase();
+      }
+      
+      print('🔍 Phone Auth: Looking for user with phone: $phoneNumber');
+      
+      // First, check if user document exists by UID (for existing Firebase Auth users)
+      var userDoc = await FirebaseConfig.firestore!
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      // If not found by UID, check by phone number (for admin-created users)
+      String? existingRole;
+      if (!userDoc.exists && phoneNumber.isNotEmpty) {
+        final normalizedPhone = normalizePhone(phoneNumber);
+        
+        // Get all users and filter by normalized phone number
+        final allUsers = await FirebaseConfig.firestore!
+            .collection('users')
+            .get();
+        
+        // Find matching user by phone number
+        print('🔍 Searching ${allUsers.docs.length} users for phone: $normalizedPhone');
+        for (var doc in allUsers.docs) {
+          final userPhone = doc.data()['phoneNumber']?.toString() ?? '';
+          final normalizedUserPhone = normalizePhone(userPhone);
+          print('   Comparing: "$normalizedUserPhone" == "$normalizedPhone"? ${normalizedUserPhone == normalizedPhone}');
+          
+          if (normalizedUserPhone == normalizedPhone) {
+            final existingData = doc.data();
+            
+            // Get existing role and fullName BEFORE migrating
+            existingRole = existingData['role']?.toString();
+            final existingFullName = (existingData['fullName'] ?? '').toString().trim();
+            
+            print('✅ Found existing user: ID=${doc.id}, Role=$existingRole, FullName=$existingFullName');
+            
+            // Update the existing document with the new UID
+            await FirebaseConfig.firestore!
+                .collection('users')
+                .doc(userCredential.user!.uid)
+                .set({
+                  ...existingData,
+                  'id': userCredential.user!.uid,
+                  'phoneNumber': phoneNumber,
+                  'updatedAt': DateTime.now().toIso8601String(),
+                }, SetOptions(merge: true));
+            
+            // Delete the old document if it has a different ID
+            if (doc.id != userCredential.user!.uid) {
+              await FirebaseConfig.firestore!
+                  .collection('users')
+                  .doc(doc.id)
+                  .delete();
+            }
+            
+            // Re-fetch the updated document
+            userDoc = await FirebaseConfig.firestore!
+                .collection('users')
+                .doc(userCredential.user!.uid)
+                .get();
+            
+            // If existing user already has fullName, use that for navigation decision
+            if (existingFullName.isNotEmpty && !mounted) return;
+            if (existingFullName.isNotEmpty) {
+              // Profile already complete - go directly to main screen
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+              );
+              return;
+            }
+            break;
+          }
+        }
+      }
+
+      // Check if profile is complete (fullName must not be null or empty)
+      String fullName = '';
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        fullName = (userData?['fullName'] ?? '').toString().trim();
+        existingRole = existingRole ?? userData?['role']?.toString();
+        print('📋 User document exists: FullName=$fullName, Role=$existingRole');
+      } else {
+        print('📋 No user document found - new user, will create account in profile completion');
+      }
+
+      if (!mounted) return;
+
+      if (fullName.isEmpty) {
+        // Profile not complete or new user - redirect to profile completion
+        // Pass the existing role if found (for admin-created users), otherwise null (new user = student)
+        print('🔄 Redirecting to Profile Completion (existingRole=$existingRole)');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => ProfileCompletionScreen(existingRole: existingRole),
+          ),
+        );
+      } else {
+        // Profile complete - go to main navigation screen
+        print('✅ Profile complete, redirecting to Main Navigation');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      String errorMessage = 'Authentication failed';
-      if (e.toString().contains('timeout') || e.toString().contains('Connection timeout')) {
-        errorMessage = 'Connection timeout. Please check:\n1. Backend server is running\n2. Correct API URL configured\n3. Device and server are on same network';
-      } else if (e.toString().contains('Failed host lookup') || e.toString().contains('Cannot connect')) {
-        errorMessage = 'Cannot connect to server. Make sure the backend is running. For physical devices, use your computer\'s IP address instead of localhost.';
-      } else {
-        errorMessage = 'Authentication failed: $e';
-      }
       setState(() {
-        _errorMessage = errorMessage;
+        _errorMessage = 'Authentication failed: $e';
         _isLoading = false;
       });
     }

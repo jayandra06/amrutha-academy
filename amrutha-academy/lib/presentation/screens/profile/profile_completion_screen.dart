@@ -3,15 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/config/firebase_config.dart';
-import '../../../data/models/user_model.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
-import '../../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
 import '../home/home_screen.dart';
 
 class ProfileCompletionScreen extends StatefulWidget {
-  const ProfileCompletionScreen({super.key});
+  final String? existingRole;
+  
+  const ProfileCompletionScreen({super.key, this.existingRole});
 
   @override
   State<ProfileCompletionScreen> createState() => _ProfileCompletionScreenState();
@@ -65,92 +62,109 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         throw Exception('User not authenticated');
       }
 
-      final profileData = {
+      // Save directly to Firestore
+      if (FirebaseConfig.firestore == null) {
+        throw Exception('Firestore not initialized. Please check your connection.');
+      }
+
+      final phoneNumber = user.phoneNumber ?? '';
+      
+      // Normalize phone number for comparison (same logic as phone_auth_screen)
+      String normalizePhone(String phone) {
+        if (phone.isEmpty) return '';
+        // Remove all spaces, dashes, parentheses
+        String normalized = phone.replaceAll(' ', '').replaceAll('-', '').replaceAll('(', '').replaceAll(')', '');
+        // If it starts with 91 but no +, add +
+        if (normalized.startsWith('91') && !normalized.startsWith('+91') && normalized.length >= 10) {
+          normalized = '+$normalized';
+        }
+        // If it doesn't start with + and has 10 digits, assume +91
+        if (!normalized.startsWith('+') && normalized.length == 10 && RegExp(r'^\d{10}$').hasMatch(normalized)) {
+          normalized = '+91$normalized';
+        }
+        return normalized.toLowerCase();
+      }
+      
+      print('🔍 Profile Completion: Looking for existing user with phone: $phoneNumber');
+      
+      // First check by UID
+      var userDoc = await FirebaseConfig.firestore!
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      
+      String? roleToUse;
+      String? avatarValue;
+      String? createdAtValue;
+      
+      // If not found by UID, check by phone number to find existing user
+      if (!userDoc.exists && phoneNumber.isNotEmpty) {
+        final normalizedPhone = normalizePhone(phoneNumber);
+        final allUsers = await FirebaseConfig.firestore!
+            .collection('users')
+            .get();
+        
+        for (var doc in allUsers.docs) {
+          final userPhone = doc.data()['phoneNumber']?.toString() ?? '';
+          if (normalizePhone(userPhone) == normalizedPhone) {
+            // Found existing user with this phone number
+            final existingData = doc.data();
+            roleToUse = existingData['role']?.toString() ?? 'student';
+            avatarValue = existingData['avatar']?.toString() ?? '';
+            createdAtValue = existingData['createdAt']?.toString();
+            
+            // Delete the old document if it has a different ID
+            if (doc.id != user.uid) {
+              await FirebaseConfig.firestore!
+                  .collection('users')
+                  .doc(doc.id)
+                  .delete();
+            }
+            break;
+          }
+        }
+      }
+      
+      // Get role from existing document or use passed role or default
+      roleToUse = roleToUse ?? 
+                  widget.existingRole ?? 
+                  (userDoc.exists ? (userDoc.data()?['role']?.toString()) : null) ?? 
+                  'student';
+      
+      avatarValue = avatarValue ?? (userDoc.exists ? (userDoc.data()?['avatar'] ?? '') : '');
+      createdAtValue = createdAtValue ?? (userDoc.exists ? (userDoc.data()?['createdAt']?.toString()) : null) ?? DateTime.now().toIso8601String();
+
+      final userData = {
+        'id': user.uid,
+        'phoneNumber': phoneNumber,
         'fullName': _nameController.text.trim(),
         'email': _emailController.text.trim(),
         'bio': _bioController.text.trim(),
         'location': _locationController.text.trim(),
-        if (_birthday != null) 'birthday': _birthday!.toIso8601String(),
-        'role': 'student',
+        'birthday': _birthday != null ? _birthday!.toIso8601String() : '',
+        'role': roleToUse, // Preserve existing role
+        'avatar': avatarValue,
         'updatedAt': DateTime.now().toIso8601String(),
+        'createdAt': createdAtValue,
       };
 
-      // Try backend API first
-      try {
-        final apiService = GetIt.instance<ApiService>();
-        final response = await apiService.put<UserModel>(
-          '/profile',
-          data: profileData,
-          fromJson: (json) => UserModel.fromJson(json),
-        ).timeout(
-          const Duration(seconds: 15),
-          onTimeout: () {
-            throw Exception('Request timeout - trying Firestore fallback');
-          },
-        );
+      // Always save to the Firebase Auth UID (this ensures one phone = one document)
+      await FirebaseConfig.firestore!
+          .collection('users')
+          .doc(user.uid)
+          .set(userData, SetOptions(merge: true));
 
-        if (!mounted) return;
+      print('✅ Profile saved to Firestore successfully');
 
-        if (response.isSuccess) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
-          return;
-        } else {
-          throw Exception(response.error ?? 'API request failed');
-        }
-      } catch (apiError) {
-        print('⚠️ Profile update API failed: $apiError');
-        print('   Attempting Firestore fallback...');
-        
-        // Fallback: Save directly to Firestore
-        if (FirebaseConfig.firestore == null) {
-          throw Exception('Firestore not initialized. Please check your connection.');
-        }
-
-        // Ensure user document exists first
-        final userDoc = await FirebaseConfig.firestore!
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        final userData = {
-          'phoneNumber': user.phoneNumber ?? '',
-          'fullName': profileData['fullName'],
-          'email': profileData['email'],
-          'bio': profileData['bio'],
-          'location': profileData['location'],
-          'birthday': profileData['birthday'] ?? '',
-          'role': profileData['role'],
-          'avatar': userDoc.exists ? (userDoc.data()?['avatar'] ?? '') : '',
-          'updatedAt': DateTime.now().toIso8601String(),
-          if (!userDoc.exists) 'createdAt': DateTime.now().toIso8601String(),
-        };
-
-        await FirebaseConfig.firestore!
-            .collection('users')
-            .doc(user.uid)
-            .set(userData, SetOptions(merge: true));
-
-        print('✅ Profile saved to Firestore successfully');
-
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      }
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     } catch (e) {
       print('❌ Profile save error: $e');
       if (!mounted) return;
       
-      String errorMessage = 'Failed to save profile';
-      if (e.toString().contains('timeout') || e.toString().contains('Connection timeout')) {
-        errorMessage = 'Connection timeout. Please check:\n1. Backend server is running\n2. Correct API URL configured\n3. Device and server are on same network';
-      } else if (e.toString().contains('Cannot connect') || e.toString().contains('Failed host lookup')) {
-        errorMessage = 'Cannot connect to server. The profile was saved to Firestore as a fallback.';
-      } else {
-        errorMessage = 'Failed to save profile: $e';
-      }
+      String errorMessage = 'Failed to save profile: $e';
       
       setState(() {
         _errorMessage = errorMessage;

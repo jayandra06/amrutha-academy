@@ -5,6 +5,7 @@ import '../../../data/models/course_model.dart';
 import '../../../data/repositories/course_repository.dart';
 import '../../widgets/app_drawer.dart';
 import 'create_trainer_screen.dart';
+import 'trainer_detail_screen.dart';
 
 class TrainersManagementScreen extends StatefulWidget {
   const TrainersManagementScreen({super.key});
@@ -309,70 +310,83 @@ class _TrainersManagementScreenState extends State<TrainersManagementScreen> {
                                 ],
                               ),
                             )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredTrainers.length,
-                              itemBuilder: (context, index) {
-                                final trainer = _filteredTrainers[index];
-                                final courses = _trainerCourses[trainer.id] ?? [];
-
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                                      child: Text(
-                                        trainer.fullName.isNotEmpty
-                                            ? trainer.fullName[0].toUpperCase()
-                                            : 'T',
-                                        style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSecondaryContainer,
-                                        ),
+                          : SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SingleChildScrollView(
+                                child: DataTable(
+                                  columnSpacing: 24,
+                                  headingRowColor: MaterialStateProperty.all(
+                                    Theme.of(context).colorScheme.surfaceVariant,
+                                  ),
+                                  columns: const [
+                                    DataColumn(
+                                      label: Text(
+                                        'Name',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
                                       ),
                                     ),
-                                    title: Text(
-                                      trainer.fullName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    DataColumn(
+                                      label: Text(
+                                        'Phone Number',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
                                     ),
-                                    subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        if (trainer.email.isNotEmpty) Text(trainer.email),
-                                        if (trainer.phoneNumber.isNotEmpty) Text(trainer.phoneNumber),
-                                        if (trainer.bio != null && trainer.bio!.isNotEmpty)
+                                    DataColumn(
+                                      label: Text(
+                                        'Email ID',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Course Name',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                  rows: _filteredTrainers.map((trainer) {
+                                    final courses = _trainerCourses[trainer.id] ?? [];
+                                    
+                                    // Get course names (comma-separated if multiple)
+                                    final courseNames = courses
+                                        .map((course) => course.title)
+                                        .join(', ');
+                                    final courseNameDisplay = courseNames.isEmpty ? '-' : courseNames;
+
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(
                                           Text(
-                                            trainer.bio!,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey[600],
-                                            ),
+                                            trainer.fullName.isNotEmpty ? trainer.fullName : '-',
+                                            style: const TextStyle(fontWeight: FontWeight.w500),
                                           ),
-                                        if (courses.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 4),
-                                            child: Wrap(
-                                              spacing: 4,
-                                              children: courses.map((course) {
-                                                return Chip(
-                                                  label: Text(
-                                                    'L${course.level}',
-                                                    style: const TextStyle(fontSize: 10),
-                                                  ),
-                                                  padding: EdgeInsets.zero,
-                                                  visualDensity: VisualDensity.compact,
-                                                );
-                                              }).toList(),
-                                            ),
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => TrainerDetailScreen(trainerId: trainer.id),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            trainer.phoneNumber.isNotEmpty ? trainer.phoneNumber : '-',
                                           ),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            trainer.email.isNotEmpty ? trainer.email : '-',
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(courseNameDisplay),
+                                        ),
                                       ],
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right),
-                                    isThreeLine: true,
-                                  ),
-                                );
-                              },
+                                    );
+                                  }).toList() as List<DataRow>,
+                                ),
+                              ),
                             ),
             ),
           ),

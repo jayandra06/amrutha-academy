@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
 import '../../../data/models/schedule_model.dart';
+import '../../../data/repositories/schedule_repository.dart';
 import '../../../services/notification_service.dart';
-import '../../../core/config/di_config.dart';
 import '../../widgets/app_drawer.dart';
-import 'package:get_it/get_it.dart';
 
 class UpcomingClassesScreen extends StatefulWidget {
   final String? courseId;
@@ -18,7 +15,7 @@ class UpcomingClassesScreen extends StatefulWidget {
 }
 
 class _UpcomingClassesScreenState extends State<UpcomingClassesScreen> {
-  final _apiService = GetIt.instance<ApiService>();
+  final _scheduleRepository = ScheduleRepository();
   List<ScheduleModel> _schedules = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -37,32 +34,15 @@ class _UpcomingClassesScreenState extends State<UpcomingClassesScreen> {
     });
 
     try {
-      final url = widget.courseId != null
-          ? '/schedules/upcoming?courseId=${widget.courseId}'
-          : '/schedules/upcoming';
-
-      final response = await _apiService.get<List<ScheduleModel>>(
-        url,
-        fromJson: (json) {
-          if (json is List) {
-            return (json as List).map((item) => ScheduleModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-          return [];
-        },
+      final schedules = await _scheduleRepository.getUpcomingSchedules(
+        courseId: widget.courseId,
       );
 
       if (!mounted) return;
-      if (response.isSuccess && response.data != null) {
-        setState(() {
-          _schedules = response.data!;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = response.error ?? 'Failed to load schedules';
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _schedules = schedules;
+        _isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {

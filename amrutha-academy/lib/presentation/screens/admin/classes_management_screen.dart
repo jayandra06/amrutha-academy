@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
 import '../../../data/models/course_model.dart';
 import '../../../data/repositories/course_repository.dart';
 import '../../widgets/app_drawer.dart';
-import 'package:get_it/get_it.dart';
 import 'create_course_screen.dart';
 
 class ClassesManagementScreen extends StatefulWidget {
@@ -15,7 +12,6 @@ class ClassesManagementScreen extends StatefulWidget {
 }
 
 class _ClassesManagementScreenState extends State<ClassesManagementScreen> {
-  final _apiService = GetIt.instance<ApiService>();
   final _courseRepository = CourseRepository();
   final _searchController = TextEditingController();
   
@@ -57,12 +53,16 @@ class _ClassesManagementScreenState extends State<ClassesManagementScreen> {
     try {
       final courses = await _courseRepository.getAllCourses();
       
+      print('📚 Loaded ${courses.length} courses from repository');
+      print('   All courses: ${courses.map((c) => c.title).join(", ")}');
+      
       setState(() {
         _allCourses = courses;
         _isLoading = false;
       });
       _applyFilters();
     } catch (e) {
+      print('❌ Error loading courses: $e');
       setState(() {
         _errorMessage = 'Error: $e';
         _isLoading = false;
@@ -73,11 +73,34 @@ class _ClassesManagementScreenState extends State<ClassesManagementScreen> {
   void _applyFilters() {
     List<CourseModel> filtered = List.from(_allCourses);
 
+    print('🔍 Applying filters on ${_allCourses.length} courses');
+    print('   Show history: $_showHistory');
+
     // Filter by active/completed
     if (_showHistory) {
       filtered = filtered.where((course) => !course.isActive).toList();
+      print('   History filter: ${filtered.length} courses');
     } else {
-      filtered = filtered.where((course) => course.isActive).toList();
+      // Show active courses (endDate in the future)
+      filtered = filtered.where((course) {
+        try {
+          final isActive = course.isActive;
+          print('   Course "${course.title}": isActive=$isActive, endDate=${course.endDate}');
+          return isActive;
+        } catch (e) {
+          print('   ⚠️ Error checking isActive for "${course.title}": $e');
+          // If there's an error, include it in active courses to show it
+          return true;
+        }
+      }).toList();
+      print('   Active filter result: ${filtered.length} courses');
+      
+      // DEBUG: If no courses after filtering, show all to debug
+      if (filtered.isEmpty && _allCourses.isNotEmpty) {
+        print('   ⚠️ WARNING: All courses filtered out! Showing all courses for debugging.');
+        print('   All courses endDates: ${_allCourses.map((c) => "${c.title}: ${c.endDate}").join(", ")}');
+        filtered = List.from(_allCourses); // Show all for now
+      }
     }
 
     // Apply search filter
@@ -94,6 +117,8 @@ class _ClassesManagementScreenState extends State<ClassesManagementScreen> {
       filtered = filtered.where((course) => course.level.toString() == _selectedLevel).toList();
     }
 
+    print('✅ Final filtered courses: ${filtered.length}');
+    
     setState(() {
       _filteredCourses = filtered;
     });
@@ -104,7 +129,7 @@ class _ClassesManagementScreenState extends State<ClassesManagementScreen> {
     return Scaffold(
       drawer: AppDrawer(),
       appBar: AppBar(
-        title: Text(_showHistory ? 'Course History' : 'Classes Management'),
+        title: Text(_showHistory ? 'Course History' : 'Courses Management'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -317,59 +342,96 @@ class _ClassesManagementScreenState extends State<ClassesManagementScreen> {
                                 ],
                               ),
                             )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredCourses.length,
-                              itemBuilder: (context, index) {
-                                final course = _filteredCourses[index];
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: course.isActive
-                                          ? Theme.of(context).colorScheme.primaryContainer
-                                          : Colors.grey[300],
-                                      child: Icon(
-                                        course.isActive ? Icons.school : Icons.history,
-                                        color: course.isActive
-                                            ? Theme.of(context).colorScheme.onPrimaryContainer
-                                            : Colors.grey[600],
+                          : SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SingleChildScrollView(
+                                child: DataTable(
+                                  columnSpacing: 24,
+                                  headingRowColor: MaterialStateProperty.all(
+                                    Theme.of(context).colorScheme.surfaceVariant,
+                                  ),
+                                  columns: const [
+                                    DataColumn(
+                                      label: Text(
+                                        'Course Name',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
                                       ),
                                     ),
-                                    title: Text(
-                                      course.title,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    DataColumn(
+                                      label: Text(
+                                        'Level',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
                                     ),
-                                    subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('Level ${course.level}'),
-                                        Text('Duration: ${course.duration} days'),
-                                        Text('Fees: ₹${course.price.toStringAsFixed(2)}'),
-                                        Text(
-                                          'Start: ${_formatDate(course.startDate)} - End: ${_formatDate(course.endDate)}',
-                                          style: TextStyle(fontSize: 12),
-                                        ),
-                                        if (course.trainerName != null)
+                                    DataColumn(
+                                      label: Text(
+                                        'Price',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Duration',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Trainer',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Status',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                  rows: _filteredCourses.map((course) {
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(
                                           Text(
-                                            'Trainer: ${course.trainerName}',
-                                            style: TextStyle(fontSize: 12),
+                                            course.title,
+                                            style: const TextStyle(fontWeight: FontWeight.w500),
                                           ),
-                                        if (!course.isActive)
-                                          Chip(
-                                            label: const Text('Completed'),
-                                            visualDensity: VisualDensity.compact,
-                                          ),
+                                          onTap: () {
+                                            // TODO: Navigate to course details
+                                          },
+                                        ),
+                                        DataCell(
+                                          Text('Level ${course.level}'),
+                                        ),
+                                        DataCell(
+                                          Text('₹${course.price.toStringAsFixed(2)}'),
+                                        ),
+                                        DataCell(
+                                          Text('${course.duration} days'),
+                                        ),
+                                        DataCell(
+                                          Text(course.trainerName ?? '-'),
+                                        ),
+                                        DataCell(
+                                          course.isActive
+                                              ? Chip(
+                                                  label: const Text('Active'),
+                                                  backgroundColor: Colors.green[100],
+                                                  labelStyle: const TextStyle(fontSize: 12),
+                                                  visualDensity: VisualDensity.compact,
+                                                )
+                                              : Chip(
+                                                  label: const Text('Completed'),
+                                                  backgroundColor: Colors.grey[300],
+                                                  labelStyle: const TextStyle(fontSize: 12),
+                                                  visualDensity: VisualDensity.compact,
+                                                ),
+                                        ),
                                       ],
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right),
-                                    isThreeLine: true,
-                                    onTap: () {
-                                      // TODO: Navigate to course details
-                                    },
-                                  ),
-                                );
-                              },
+                                    );
+                                  }).toList() as List<DataRow>,
+                                ),
+                              ),
                             ),
             ),
           ),

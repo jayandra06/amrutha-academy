@@ -328,67 +328,82 @@ class _StudentsManagementScreenState extends State<StudentsManagementScreen> {
                                 ],
                               ),
                             )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredStudents.length,
-                              itemBuilder: (context, index) {
-                                final student = _filteredStudents[index];
-                                final enrollments = _studentEnrollments[student.id] ?? [];
-                                final enrolledCourses = enrollments
-                                    .map((e) => _courseMap[e.courseId])
-                                    .whereType<CourseModel>()
-                                    .toList();
-
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  child: ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                                      child: Text(
-                                        student.fullName.isNotEmpty
-                                            ? student.fullName[0].toUpperCase()
-                                            : 'S',
-                                        style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                        ),
+                          : SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: SingleChildScrollView(
+                                child: DataTable(
+                                  columnSpacing: 24,
+                                  headingRowColor: MaterialStateProperty.all(
+                                    Theme.of(context).colorScheme.surfaceVariant,
+                                  ),
+                                  columns: const [
+                                    DataColumn(
+                                      label: Text(
+                                        'Name',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
                                       ),
                                     ),
-                                    title: Text(
-                                      student.fullName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    DataColumn(
+                                      label: Text(
+                                        'Phone Number',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
                                     ),
-                                    subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        if (student.email.isNotEmpty) Text(student.email),
-                                        if (student.phoneNumber.isNotEmpty) Text(student.phoneNumber),
-                                        if (enrolledCourses.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 4),
-                                            child: Wrap(
-                                              spacing: 4,
-                                              children: enrolledCourses.map((course) {
-                                                return Chip(
-                                                  label: Text(
-                                                    'L${course.level}',
-                                                    style: const TextStyle(fontSize: 10),
-                                                  ),
-                                                  padding: EdgeInsets.zero,
-                                                  visualDensity: VisualDensity.compact,
-                                                );
-                                              }).toList(),
-                                            ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Email ID',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: Text(
+                                        'Course Name',
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                  rows: _filteredStudents.map((student) {
+                                    final enrollments = _studentEnrollments[student.id] ?? [];
+                                    final enrolledCourses = enrollments
+                                        .map((e) => _courseMap[e.courseId])
+                                        .whereType<CourseModel>()
+                                        .toList();
+                                    
+                                    // Get course names (comma-separated if multiple)
+                                    final courseNames = enrolledCourses
+                                        .map((course) => course.title)
+                                        .join(', ');
+                                    final courseNameDisplay = courseNames.isEmpty ? '-' : courseNames;
+
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(
+                                          Text(
+                                            student.fullName.isNotEmpty ? student.fullName : '-',
+                                            style: const TextStyle(fontWeight: FontWeight.w500),
                                           ),
+                                          onTap: () {
+                                            // TODO: Navigate to student details screen
+                                          },
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            student.phoneNumber.isNotEmpty ? student.phoneNumber : '-',
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            student.email.isNotEmpty ? student.email : '-',
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(courseNameDisplay),
+                                        ),
                                       ],
-                                    ),
-                                    trailing: const Icon(Icons.chevron_right),
-                                    isThreeLine: true,
-                                    onTap: () {
-                                      // TODO: Navigate to student details screen
-                                    },
-                                  ),
-                                );
-                              },
+                                    );
+                                  }).toList() as List<DataRow>,
+                                ),
+                              ),
                             ),
             ),
           ),

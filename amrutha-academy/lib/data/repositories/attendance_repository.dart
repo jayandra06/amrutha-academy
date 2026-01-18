@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/config/firebase_config.dart';
 import '../models/attendance_model.dart';
 
@@ -13,7 +14,7 @@ class AttendanceRepository {
         return [];
       }
 
-      Query query = FirebaseConfig.firestore!
+      Query<Map<String, dynamic>> query = FirebaseConfig.firestore!
           .collection('attendance')
           .where('userId', isEqualTo: currentUser.uid);
       
@@ -26,9 +27,11 @@ class AttendanceRepository {
       return snapshot.docs
           .map((doc) {
             try {
+              final data = doc.data() as Map<String, dynamic>?;
+              if (data == null) return null;
               return AttendanceModel.fromJson({
                 'id': doc.id,
-                ...doc.data(),
+                ...data,
               });
             } catch (e) {
               print('Error parsing attendance ${doc.id}: $e');

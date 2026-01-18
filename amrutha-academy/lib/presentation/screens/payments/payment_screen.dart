@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../data/models/course_model.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
-import '../../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
 
 class PaymentScreen extends StatefulWidget {
   final CourseModel course;
@@ -22,7 +18,6 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   late Razorpay _razorpay;
-  final _apiService = GetIt.instance<ApiService>();
   bool _isProcessing = false;
   String? _errorMessage;
   String? _orderId;
@@ -49,32 +44,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
 
     try {
-      // Create order via backend
-      final response = await _apiService.post<Map<String, dynamic>>(
-        '/payments/create-order',
-        data: {
-          'amount': widget.course.price,
-          'currency': 'INR',
-          'notes': {
-            'courseId': widget.course.id,
-            'courseTitle': widget.course.title,
-          },
-        },
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-
-      if (!response.isSuccess || response.data == null) {
-        throw Exception(response.error ?? 'Failed to create order');
-      }
-
-      final orderData = response.data!;
-      _orderId = orderData['orderId'] as String?;
-      final keyId = orderData['keyId'] as String?;
-      final amount = (orderData['amount'] as num?)?.toInt() ?? (widget.course.price * 100).toInt();
-
-      if (keyId == null) {
-        throw Exception('Razorpay key not configured');
-      }
+      // TODO: Payment integration requires backend for order creation and verification
+      // For now, using direct payment without order creation
+      // In production, implement Firebase Cloud Functions or keep backend for payment processing
+      
+      // Placeholder: Direct payment without order creation
+      // This is a simplified version - production should use backend order creation
+      final keyId = 'rzp_test_1DP5mmOlF5G5ag'; // Replace with your Razorpay key from Firebase/config
+      final amount = (widget.course.price * 100).toInt(); // Amount in paise
 
       // Open Razorpay checkout
       final options = {
@@ -82,7 +59,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'amount': amount,
         'name': 'Amrutha Academy',
         'description': widget.course.title,
-        'order_id': _orderId,
         'prefill': {
           'contact': '',
           'email': '',
@@ -103,34 +79,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Future<void> _handlePaymentSuccess(PaymentSuccessResponse response) async {
     try {
-      // Verify payment with backend
-      final verifyResponse = await _apiService.post<Map<String, dynamic>>(
-        '/payments/verify',
-        data: {
-          'orderId': _orderId ?? response.orderId,
-          'paymentId': response.paymentId,
-          'signature': response.signature,
-          'courseId': widget.course.id,
-        },
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-
+      // TODO: Implement payment verification via Firebase Cloud Functions
+      // For now, directly call success callback
+      // In production, verify payment signature before proceeding
+      
       if (!mounted) return;
-
-      if (verifyResponse.isSuccess) {
-        widget.onPaymentSuccess();
-      } else {
-        setState(() {
-          _errorMessage = verifyResponse.error ?? 'Payment verification failed';
-          _isProcessing = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage!),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      widget.onPaymentSuccess();
     } catch (e) {
       if (!mounted) return;
       setState(() {

@@ -2,13 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
 import '../../../data/models/user_model.dart';
-import '../../../core/config/di_config.dart';
 import '../../../core/config/firebase_config.dart';
 import '../../widgets/app_drawer.dart';
-import 'package:get_it/get_it.dart';
 
 class CreateCourseScreen extends StatefulWidget {
   const CreateCourseScreen({super.key});
@@ -23,11 +19,12 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _durationController = TextEditingController();
-  final _apiService = GetIt.instance<ApiService>();
 
   int _selectedLevel = 1;
   DateTime? _startDate;
   DateTime? _endDate;
+  TimeOfDay? _classStartTime;
+  TimeOfDay? _classEndTime;
   String? _category;
   String? _trainerId;
   List<UserModel> _trainers = [];
@@ -125,6 +122,67 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
     }
   }
 
+  Future<void> _selectStartTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _classStartTime ?? const TimeOfDay(hour: 9, minute: 0),
+    );
+    if (picked != null) {
+      setState(() {
+        _classStartTime = picked;
+        // If end time is before start time, clear it
+        if (_classEndTime != null && _isTimeBefore(_classEndTime!, picked)) {
+          _classEndTime = null;
+        }
+      });
+    }
+  }
+
+  Future<void> _selectEndTime() async {
+    if (_classStartTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select start time first')),
+      );
+      return;
+    }
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _classEndTime ?? TimeOfDay(
+        hour: _classStartTime!.hour + 2,
+        minute: _classStartTime!.minute,
+      ),
+    );
+    if (picked != null) {
+      if (_isTimeBefore(picked, _classStartTime!)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('End time must be after start time')),
+        );
+        return;
+      }
+      setState(() {
+        _classEndTime = picked;
+      });
+    }
+  }
+
+  bool _isTimeBefore(TimeOfDay time1, TimeOfDay time2) {
+    final minutes1 = time1.hour * 60 + time1.minute;
+    final minutes2 = time2.hour * 60 + time2.minute;
+    return minutes1 < minutes2;
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hour == 0
+        ? 12
+        : time.hour > 12
+            ? time.hour - 12
+            : time.hour;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.hour < 12 ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
   Future<void> _createCourse() async {
     if (!_formKey.currentState!.validate()) return;
     if (_startDate == null || _endDate == null) {
@@ -162,85 +220,48 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
       'category': _category,
       'trainerId': _trainerId,
       'trainerName': trainerName,
+      if (_classStartTime != null && _classEndTime != null)
+        'classTimings': '${_formatTimeOfDay(_classStartTime!)} - ${_formatTimeOfDay(_classEndTime!)}',
+      if (_classStartTime != null) 'classStartTime': '${_classStartTime!.hour.toString().padLeft(2, '0')}:${_classStartTime!.minute.toString().padLeft(2, '0')}',
+      if (_classEndTime != null) 'classEndTime': '${_classEndTime!.hour.toString().padLeft(2, '0')}:${_classEndTime!.minute.toString().padLeft(2, '0')}',
       'image': '',
       'createdAt': DateTime.now().toIso8601String(),
     };
 
-    // Try backend API first
+    // Save directly to Firestore
     try {
-      final response = await _apiService.post<Map<String, dynamic>>(
-        '/courses/create',
-        data: courseData,
-        fromJson: (json) => json as Map<String, dynamic>,
-      ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () {
-          throw Exception('Request timeout - trying Firestore fallback');
-        },
-      );
+      if (FirebaseConfig.firestore == null) {
+        throw Exception('Firestore not initialized. Please check your connection.');
+      }
+
+      // Get current user as admin
+      final currentUser = FirebaseConfig.auth?.currentUser;
+      final courseId = FirebaseConfig.firestore!.collection('courses').doc().id;
+      
+      await FirebaseConfig.firestore!
+          .collection('courses')
+          .doc(courseId)
+          .set({
+            ...courseData,
+            'id': courseId,
+            'adminId': currentUser?.uid ?? '',
+          });
+
+      print('✅ Course saved to Firestore successfully');
 
       if (!mounted) return;
-
-      if (response.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Course created successfully!')),
-        );
-        Navigator.pop(context, true);
-        return;
-      } else {
-        throw Exception(response.error ?? 'API request failed');
-      }
-    } catch (apiError) {
-      print('⚠️ Create Course API failed: $apiError');
-      print('   Attempting Firestore fallback...');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Course created successfully!')),
+      );
+      Navigator.pop(context, true);
+    } catch (e) {
+      print('❌ Firestore save error: $e');
+      if (!mounted) return;
       
-      // Fallback: Save directly to Firestore
-      try {
-        if (FirebaseConfig.firestore == null) {
-          throw Exception('Firestore not initialized. Please check your connection.');
-        }
-
-        // Get current user as admin
-        final currentUser = FirebaseConfig.auth?.currentUser;
-        final courseId = FirebaseConfig.firestore!.collection('courses').doc().id;
-        
-        await FirebaseConfig.firestore!
-            .collection('courses')
-            .doc(courseId)
-            .set({
-              ...courseData,
-              'id': courseId,
-              'adminId': currentUser?.uid ?? '',
-            });
-
-        print('✅ Course saved to Firestore successfully');
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Course created successfully (saved to Firestore)'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        Navigator.pop(context, true);
-      } catch (firestoreError) {
-        print('❌ Firestore save error: $firestoreError');
-        if (!mounted) return;
-        
-        String errorMessage = 'Failed to create course';
-        if (apiError.toString().contains('timeout') || apiError.toString().contains('Connection timeout')) {
-          errorMessage = 'Connection timeout. The course was saved to Firestore as a fallback.';
-        } else if (apiError.toString().contains('Cannot connect') || apiError.toString().contains('Failed host lookup')) {
-          errorMessage = 'Cannot connect to server. The course was saved to Firestore as a fallback.';
-        } else {
-          errorMessage = 'Failed to create course: $firestoreError';
-        }
-        
-        setState(() {
-          _errorMessage = errorMessage;
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _errorMessage = 'Failed to create course: $e';
+        _isLoading = false;
+      });
     }
   }
 
@@ -379,10 +400,21 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
                 ),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('No Trainer Assigned')),
-                  ..._trainers.map((trainer) => DropdownMenuItem(
+                  ...() {
+                    final filteredTrainers = _trainers
+                        .where((trainer) => trainer.fullName.isNotEmpty || trainer.phoneNumber.isNotEmpty)
+                        .toList();
+                    filteredTrainers.sort((a, b) => a.fullName.compareTo(b.fullName));
+                    return filteredTrainers.map((trainer) {
+                      final displayName = trainer.fullName.isNotEmpty
+                          ? trainer.fullName
+                          : (trainer.phoneNumber.isNotEmpty ? 'Trainer - ${trainer.phoneNumber}' : 'Trainer');
+                      return DropdownMenuItem(
                         value: trainer.id,
-                        child: Text(trainer.fullName),
-                      )),
+                        child: Text(displayName),
+                      );
+                    });
+                  }(),
                 ],
                 onChanged: _isLoadingTrainers
                     ? null
@@ -397,6 +429,38 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
                   padding: EdgeInsets.only(top: 8),
                   child: LinearProgressIndicator(),
                 ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _selectStartTime,
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Class Start Time',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.access_time),
+                  ),
+                  child: Text(
+                    _classStartTime != null
+                        ? _formatTimeOfDay(_classStartTime!)
+                        : 'Select start time',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _selectEndTime,
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Class End Time',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.access_time),
+                  ),
+                  child: Text(
+                    _classEndTime != null
+                        ? _formatTimeOfDay(_classEndTime!)
+                        : 'Select end time',
+                  ),
+                ),
+              ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Text(

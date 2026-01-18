@@ -86,7 +86,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           _buildDashboardCard(
             context,
-            'Classes',
+            'Courses Management',
             Icons.class_,
             Colors.deepPurple,
             () {

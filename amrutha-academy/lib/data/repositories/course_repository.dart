@@ -1,43 +1,57 @@
-import '../../../services/api_service.dart';
-import '../models/api_response.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/course_model.dart';
-import '../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
+import '../../core/config/firebase_config.dart';
 
 class CourseRepository {
-  final ApiService _apiService = GetIt.instance<ApiService>();
-
   Future<List<CourseModel>> getCoursesByLevel(int level) async {
     try {
-      final response = await _apiService.get<List<CourseModel>>(
-        '/courses/by-level?level=$level',
-        fromJson: (json) {
-          if (json is List) {
-            return (json as List).map((item) => CourseModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-          return [];
-        },
-      );
-
-      if (response.isSuccess && response.data != null) {
-        return response.data!;
+      if (FirebaseConfig.firestore == null) {
+        return [];
       }
-      return [];
+
+      final snapshot = await FirebaseConfig.firestore!
+          .collection('courses')
+          .where('level', isEqualTo: level)
+          .get();
+
+      return snapshot.docs
+          .map((doc) {
+            try {
+              final data = doc.data() as Map<String, dynamic>;
+              return CourseModel.fromJson({
+                'id': doc.id,
+                ...data,
+              });
+            } catch (e) {
+              print('Error parsing course ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<CourseModel>()
+          .toList();
     } catch (e) {
-      print('Error fetching courses: $e');
+      print('Error fetching courses by level: $e');
       return [];
     }
   }
 
   Future<CourseModel?> getCourseById(String courseId) async {
     try {
-      final response = await _apiService.get<CourseModel>(
-        '/course/$courseId',
-        fromJson: (json) => CourseModel.fromJson(json as Map<String, dynamic>),
-      );
+      if (FirebaseConfig.firestore == null) {
+        return null;
+      }
 
-      if (response.isSuccess && response.data != null) {
-        return response.data;
+      final doc = await FirebaseConfig.firestore!
+          .collection('courses')
+          .doc(courseId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        return CourseModel.fromJson({
+          'id': doc.id,
+          ...data,
+        });
       }
       return null;
     } catch (e) {
@@ -47,23 +61,37 @@ class CourseRepository {
   }
 
   Future<List<CourseModel>> getAllCourses() async {
+    // Load from Firestore directly
     try {
-      final response = await _apiService.get<List<CourseModel>>(
-        '/courses',
-        fromJson: (json) {
-          if (json is List) {
-            return (json as List).map((item) => CourseModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-          return [];
-        },
-      );
-
-      if (response.isSuccess && response.data != null) {
-        return response.data!;
+      if (FirebaseConfig.firestore == null) {
+        print('⚠️ Firestore not initialized');
+        return [];
       }
-      return [];
+
+      final coursesSnapshot = await FirebaseConfig.firestore!
+          .collection('courses')
+          .get();
+
+      final courses = coursesSnapshot.docs
+          .map((doc) {
+            try {
+              final data = doc.data() as Map<String, dynamic>;
+              return CourseModel.fromJson({
+                'id': doc.id,
+                ...data,
+              });
+            } catch (e) {
+              print('Error parsing course ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<CourseModel>()
+          .toList();
+
+      print('✅ Loaded ${courses.length} courses from Firestore');
+      return courses;
     } catch (e) {
-      print('Error fetching all courses: $e');
+      print('❌ Firestore fetch error: $e');
       return [];
     }
   }

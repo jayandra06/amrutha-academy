@@ -9,7 +9,7 @@ class ScheduleRepository {
         return [];
       }
 
-      Query query = FirebaseConfig.firestore!.collection('schedules');
+      Query<Map<String, dynamic>> query = FirebaseConfig.firestore!.collection('schedules');
       
       if (courseId != null) {
         query = query.where('courseId', isEqualTo: courseId);
@@ -22,9 +22,11 @@ class ScheduleRepository {
       return snapshot.docs
           .map((doc) {
             try {
+              final data = doc.data() as Map<String, dynamic>?;
+              if (data == null) return null;
               return ScheduleModel.fromJson({
                 'id': doc.id,
-                ...doc.data(),
+                ...data,
               });
             } catch (e) {
               print('Error parsing schedule ${doc.id}: $e');
@@ -47,7 +49,7 @@ class ScheduleRepository {
         return [];
       }
 
-      Query query = FirebaseConfig.firestore!.collection('schedules');
+      Query<Map<String, dynamic>> query = FirebaseConfig.firestore!.collection('schedules');
       
       if (courseId != null) {
         query = query.where('courseId', isEqualTo: courseId);
@@ -59,9 +61,11 @@ class ScheduleRepository {
       return snapshot.docs
           .map((doc) {
             try {
+              final data = doc.data() as Map<String, dynamic>?;
+              if (data == null) return null;
               return ScheduleModel.fromJson({
                 'id': doc.id,
-                ...doc.data(),
+                ...data,
               });
             } catch (e) {
               print('Error parsing schedule ${doc.id}: $e');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/config/firebase_config.dart';
 import '../auth/phone_auth_screen.dart';
 import '../main/main_navigation_screen.dart';
@@ -32,23 +33,76 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
       
       if (user != null) {
-        // User is logged in - check profile from Firestore directly (faster than API call)
+        // User is logged in - check profile from Firestore directly
         try {
-          final userDoc = await FirebaseConfig.firestore
+          var userDoc = await FirebaseConfig.firestore
               ?.collection('users')
               .doc(user.uid)
               .get();
+          
+          // If not found by UID, check by phone number (for admin-created users)
+          if ((userDoc?.exists ?? false) == false && user.phoneNumber != null && user.phoneNumber!.isNotEmpty) {
+            // Normalize phone number for comparison
+            String normalizePhone(String phone) {
+              return phone.replaceAll(' ', '').replaceAll('-', '');
+            }
+            
+            final normalizedPhone = normalizePhone(user.phoneNumber!);
+            
+            // Get all users and filter by normalized phone number
+            final allUsers = await FirebaseConfig.firestore
+                ?.collection('users')
+                .get();
+            
+            if (allUsers != null) {
+              for (var doc in allUsers.docs) {
+                final userPhone = doc.data()['phoneNumber']?.toString() ?? '';
+                if (normalizePhone(userPhone) == normalizedPhone) {
+                  final existingData = doc.data();
+                  
+                  // Update the existing document with the new UID
+                  await FirebaseConfig.firestore!
+                      .collection('users')
+                      .doc(user.uid)
+                      .set({
+                        ...existingData,
+                        'id': user.uid,
+                        'phoneNumber': user.phoneNumber ?? '',
+                        'updatedAt': DateTime.now().toIso8601String(),
+                      }, SetOptions(merge: true));
+                  
+                  // Delete the old document if it has a different ID
+                  if (doc.id != user.uid) {
+                    await FirebaseConfig.firestore!
+                        .collection('users')
+                        .doc(doc.id)
+                        .delete();
+                  }
+                  
+                  // Re-fetch the updated document
+                  userDoc = await FirebaseConfig.firestore!
+                      .collection('users')
+                      .doc(user.uid)
+                      .get();
+                  break;
+                }
+              }
+            }
+          }
           
           if (!mounted) return;
 
           if (userDoc?.exists ?? false) {
             final userData = userDoc!.data()!;
             final fullName = (userData['fullName'] ?? '').toString().trim();
+            final existingRole = userData['role']?.toString();
             
             if (fullName.isEmpty) {
-              // Profile not complete - redirect to profile completion
+              // Profile not complete - redirect to profile completion with existing role
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const ProfileCompletionScreen()),
+                MaterialPageRoute(
+                  builder: (_) => ProfileCompletionScreen(existingRole: existingRole),
+                ),
               );
             } else {
               // Profile complete - go to main navigation screen

@@ -3,10 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../data/models/chat_room_model.dart';
 import '../../../data/models/chat_message_model.dart';
 import '../../../services/chat_service.dart';
-import '../../../services/api_service.dart';
-import '../../../data/models/api_response.dart';
-import '../../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final ChatRoomModel chatRoom;
@@ -21,7 +17,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   final _chatService = ChatService();
-  final _apiService = GetIt.instance<ApiService>();
   List<ChatMessageModel> _messages = [];
   bool _canSendMessages = true;
   bool _isLoading = true;
@@ -35,23 +30,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Future<void> _checkAccessAndLoadMessages() async {
     try {
-      // Check access via API
-      final response = await _apiService.get<Map<String, dynamic>>(
-        '/chat/rooms/${widget.chatRoom.id}/check-access',
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-
-      if (!response.isSuccess) {
-        setState(() {
-          _errorMessage = response.error ?? 'Access denied';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final data = response.data!;
+      // Check access: if chat room is read-only, user cannot send messages
       setState(() {
-        _canSendMessages = data['canSendMessage'] == true;
+        _canSendMessages = !widget.chatRoom.isReadOnly;
       });
 
       // Load messages from Realtime DB

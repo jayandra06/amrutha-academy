@@ -34,12 +34,23 @@ class CourseModel {
   factory CourseModel.fromJson(Map<String, dynamic> json) {
     // Handle both String and DateTime for dates
     DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) {
+        // Default to 1 year from now if null
+        return DateTime.now().add(const Duration(days: 365));
+      }
       if (dateValue is DateTime) {
         return dateValue;
       } else if (dateValue is String) {
-        return DateTime.parse(dateValue);
+        try {
+          return DateTime.parse(dateValue);
+        } catch (e) {
+          print('⚠️ Failed to parse date: $dateValue, error: $e');
+          // Default to 1 year from now if parsing fails
+          return DateTime.now().add(const Duration(days: 365));
+        }
       }
-      return DateTime.now();
+      // Default to 1 year from now
+      return DateTime.now().add(const Duration(days: 365));
     }
 
     return CourseModel(
@@ -48,15 +59,15 @@ class CourseModel {
       description: json['description'] ?? '',
       level: json['level'] ?? 1,
       price: (json['price'] ?? 0).toDouble(),
-      startDate: json['startDate'],
-      endDate: json['endDate'],
+      startDate: parseDate(json['startDate']),
+      endDate: parseDate(json['endDate']),
       duration: json['duration'] ?? 0,
       category: json['category'],
       image: json['image'],
       trainerId: json['trainerId'],
       trainerName: json['trainerName'],
       adminId: json['adminId'],
-      createdAt: json['createdAt'],
+      createdAt: parseDate(json['createdAt']),
     );
   }
 
@@ -91,17 +102,11 @@ class CourseModel {
 
   bool get isActive {
     try {
-      DateTime end;
-      if (endDate is DateTime) {
-        end = endDate as DateTime;
-      } else if (endDate is String) {
-        end = DateTime.parse(endDate as String);
-      } else {
-        return false;
-      }
-      return DateTime.now().isBefore(end);
+      // endDate is always DateTime after parsing in fromJson
+      return DateTime.now().isBefore(endDate);
     } catch (e) {
-      return false;
+      // If there's an error, assume active to show the course
+      return true;
     }
   }
 }

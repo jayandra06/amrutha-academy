@@ -1,28 +1,40 @@
-import '../../../services/api_service.dart';
-import '../models/api_response.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/enrollment_model.dart';
-import '../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
+import '../../core/config/firebase_config.dart';
 
 class EnrollmentRepository {
-  final ApiService _apiService = GetIt.instance<ApiService>();
-
   Future<List<EnrollmentModel>> getMyEnrollments() async {
     try {
-      final response = await _apiService.get<List<EnrollmentModel>>(
-        '/courses/my-enrollments',
-        fromJson: (json) {
-          if (json is List) {
-            return (json as List).map((item) => EnrollmentModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-          return [];
-        },
-      );
-
-      if (response.isSuccess && response.data != null) {
-        return response.data!;
+      if (FirebaseConfig.firestore == null) {
+        return [];
       }
-      return [];
+
+      final currentUser = FirebaseConfig.auth?.currentUser;
+      if (currentUser == null) {
+        return [];
+      }
+
+      final snapshot = await FirebaseConfig.firestore!
+          .collection('enrollments')
+          .where('userId', isEqualTo: currentUser.uid)
+          .get();
+
+      return snapshot.docs
+          .map((doc) {
+            try {
+              final data = doc.data() as Map<String, dynamic>?;
+              if (data == null) return null;
+              return EnrollmentModel.fromJson({
+                'id': doc.id,
+                ...data,
+              });
+            } catch (e) {
+              print('Error parsing enrollment ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<EnrollmentModel>()
+          .toList();
     } catch (e) {
       print('Error fetching enrollments: $e');
       return [];
@@ -31,16 +43,30 @@ class EnrollmentRepository {
 
   Future<EnrollmentModel?> enrollInCourse(String courseId) async {
     try {
-      final response = await _apiService.post<EnrollmentModel>(
-        '/courses/enroll',
-        data: {'courseId': courseId},
-        fromJson: (json) => EnrollmentModel.fromJson(json as Map<String, dynamic>),
-      );
-
-      if (response.isSuccess && response.data != null) {
-        return response.data;
+      if (FirebaseConfig.firestore == null) {
+        return null;
       }
-      return null;
+
+      final currentUser = FirebaseConfig.auth?.currentUser;
+      if (currentUser == null) {
+        return null;
+      }
+
+      final enrollmentId = FirebaseConfig.firestore!.collection('enrollments').doc().id;
+      final enrollmentData = {
+        'id': enrollmentId,
+        'userId': currentUser.uid,
+        'courseId': courseId,
+        'enrolledAt': DateTime.now().toIso8601String(),
+        'status': 'active',
+      };
+
+      await FirebaseConfig.firestore!
+          .collection('enrollments')
+          .doc(enrollmentId)
+          .set(enrollmentData);
+
+      return EnrollmentModel.fromJson(enrollmentData);
     } catch (e) {
       print('Error enrolling in course: $e');
       return null;
@@ -49,20 +75,31 @@ class EnrollmentRepository {
 
   Future<List<EnrollmentModel>> getEnrollmentsByUserId(String userId) async {
     try {
-      final response = await _apiService.get<List<EnrollmentModel>>(
-        '/courses/enrollments?userId=$userId',
-        fromJson: (json) {
-          if (json is List) {
-            return (json as List).map((item) => EnrollmentModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-          return [];
-        },
-      );
-
-      if (response.isSuccess && response.data != null) {
-        return response.data!;
+      if (FirebaseConfig.firestore == null) {
+        return [];
       }
-      return [];
+
+      final snapshot = await FirebaseConfig.firestore!
+          .collection('enrollments')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      return snapshot.docs
+          .map((doc) {
+            try {
+              final data = doc.data() as Map<String, dynamic>?;
+              if (data == null) return null;
+              return EnrollmentModel.fromJson({
+                'id': doc.id,
+                ...data,
+              });
+            } catch (e) {
+              print('Error parsing enrollment ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<EnrollmentModel>()
+          .toList();
     } catch (e) {
       print('Error fetching enrollments: $e');
       return [];
