@@ -42,32 +42,33 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBQ1x6bwLTxKn3WGHtTc3ClD451JiSuciw',
-    appId: '1:349596859394:web:8038398eb110ef689c7b1b',
+    apiKey: 'AIzaSyCnsK2ePZBa_iqXa706_BcIBSP-F0SVv70',
+    appId: '1:349596859394:web:b83502a2998a28129c7b1b',
     messagingSenderId: '349596859394',
     projectId: 'amrutha-academy',
     authDomain: 'amrutha-academy.firebaseapp.com',
-    storageBucket: 'amrutha-academy.firebasestorage.app',
     databaseURL: 'https://amrutha-academy-default-rtdb.firebaseio.com',
+    storageBucket: 'amrutha-academy.firebasestorage.app',
+    measurementId: 'G-5HHW2S8TME',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBQ1x6bwLTxKn3WGHtTc3ClD451JiSuciw',
-    appId: '1:349596859394:android:c77aceb0f9beecd09c7b1b',
+    appId: '1:349596859394:android:6e172ff76c49fbe29c7b1b',
     messagingSenderId: '349596859394',
     projectId: 'amrutha-academy',
-    storageBucket: 'amrutha-academy.firebasestorage.app',
     databaseURL: 'https://amrutha-academy-default-rtdb.firebaseio.com',
+    storageBucket: 'amrutha-academy.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBQ1x6bwLTxKn3WGHtTc3ClD451JiSuciw',
-    appId: '1:349596859394:ios:PLACEHOLDER_APP_ID',
+    apiKey: 'AIzaSyBHrroksyjaAfvVJ-6qd6QuZiU6kuTT5b0',
+    appId: '1:349596859394:ios:1f18528d5d8303879c7b1b',
     messagingSenderId: '349596859394',
     projectId: 'amrutha-academy',
-    storageBucket: 'amrutha-academy.firebasestorage.app',
     databaseURL: 'https://amrutha-academy-default-rtdb.firebaseio.com',
-    iosBundleId: 'com.amruthaacademy.amruthaAcademy',
+    storageBucket: 'amrutha-academy.firebasestorage.app',
+    iosBundleId: '1',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
