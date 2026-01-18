@@ -12,14 +12,30 @@ class ApiService {
     try {
       final user = FirebaseConfig.auth?.currentUser;
       if (user != null) {
-        final token = await user.getIdToken();
-        _dio.options.headers['Authorization'] = 'Bearer $token';
+        // Try to get fresh token, but don't force refresh if it fails
+        String? token;
+        try {
+          token = await user.getIdToken(true);
+        } catch (e) {
+          // If force refresh fails, try without forcing
+          print('⚠️ API Service - Force token refresh failed, trying regular token: $e');
+          token = await user.getIdToken();
+        }
+        
+        if (token != null && token.isNotEmpty) {
+          _dio.options.headers['Authorization'] = 'Bearer $token';
+        } else {
+          _dio.options.headers.remove('Authorization');
+          print('⚠️ API Service - Token is null or empty');
+        }
       } else {
         _dio.options.headers.remove('Authorization');
+        print('⚠️ API Service - No current user');
       }
     } catch (e) {
-      // If getting token fails, remove auth header
+      // If getting token fails, remove auth header but don't throw
       _dio.options.headers.remove('Authorization');
+      print('⚠️ API Service - Failed to add auth token: $e');
     }
   }
 

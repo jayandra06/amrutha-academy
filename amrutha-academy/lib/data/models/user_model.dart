@@ -22,6 +22,16 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Normalize role to lowercase to handle any casing issues
+    final roleValue = json['role'];
+    String normalizedRole = 'student';
+    if (roleValue != null) {
+      final roleString = roleValue.toString().toLowerCase().trim();
+      if (roleString == 'admin' || roleString == 'trainer' || roleString == 'student') {
+        normalizedRole = roleString;
+      }
+    }
+    
     return UserModel(
       id: json['id'] ?? '',
       fullName: json['fullName'] ?? '',
@@ -33,7 +43,7 @@ class UserModel {
           ? DateTime.parse(json['birthday'])
           : null,
       location: json['location'],
-      role: json['role'] ?? 'student',
+      role: normalizedRole,
     );
   }
 

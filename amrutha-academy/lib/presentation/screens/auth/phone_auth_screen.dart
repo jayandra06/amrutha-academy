@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:dio/dio.dart';
 import '../../../core/config/firebase_config.dart';
 import '../../../services/api_service.dart';
 import '../../../data/models/api_response.dart';
@@ -120,47 +121,83 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   Future<void> _signInWithCredential(PhoneAuthCredential credential) async {
     try {
       final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      final idToken = await userCredential.user?.getIdToken();
+      
+      if (userCredential.user == null) {
+        throw Exception('Failed to sign in with credential');
+      }
 
-      if (idToken == null) {
+      // Get ID token immediately (no artificial delay needed)
+      // Use forceRefresh only if token is missing
+      String? idToken = await userCredential.user!.getIdToken();
+      if (idToken == null || idToken.isEmpty) {
+        // Only force refresh if we didn't get a token
+        idToken = await userCredential.user!.getIdToken(true);
+      }
+
+      if (idToken == null || idToken.isEmpty) {
         throw Exception('Failed to get ID token');
       }
 
-      // Verify with backend
-      final apiService = GetIt.instance<ApiService>();
-      final response = await apiService.post<UserModel>(
-        '/auth/phone/verify-id-token',
-        data: {},
-        fromJson: (json) => UserModel.fromJson(json),
-      );
-
       if (!mounted) return;
 
-      if (response.isSuccess && response.data != null) {
-        final user = response.data!;
-        
-        // Check if profile is complete (fullName must not be null or empty)
-        final fullName = user.fullName.trim();
-        if (fullName.isEmpty) {
-          // Profile not complete - redirect to profile completion
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const ProfileCompletionScreen()),
-          );
+      // Verify with backend - manually set the Authorization header since user might not be in FirebaseConfig.auth yet
+      final apiService = GetIt.instance<ApiService>();
+      final dio = GetIt.instance<Dio>();
+      
+      // Temporarily set the auth header
+      final originalHeaders = Map<String, dynamic>.from(dio.options.headers);
+      dio.options.headers['Authorization'] = 'Bearer $idToken';
+
+      try {
+        // Don't send role preference - backend will use existing user role from database
+        final response = await apiService.post<UserModel>(
+          '/auth/phone/verify-id-token',
+          data: {},
+          fromJson: (json) => UserModel.fromJson(json),
+        );
+
+        if (!mounted) return;
+
+        if (response.isSuccess && response.data != null) {
+          final user = response.data!;
+          
+          // Check if profile is complete (fullName must not be null or empty)
+          final fullName = user.fullName.trim();
+          if (fullName.isEmpty) {
+            // Profile not complete - redirect to profile completion
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const ProfileCompletionScreen()),
+            );
+          } else {
+            // Profile complete - go to main navigation screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+            );
+          }
         } else {
-          // Profile complete - go to main navigation screen
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-          );
+          if (!mounted) return;
+          setState(() {
+            _errorMessage = response.error ?? 'Authentication failed';
+            _isLoading = false;
+          });
         }
-      } else {
-        setState(() {
-          _errorMessage = response.error ?? 'Authentication failed';
-          _isLoading = false;
-        });
+      } finally {
+        // Restore original headers
+        dio.options.headers.clear();
+        dio.options.headers.addAll(originalHeaders);
       }
     } catch (e) {
+      if (!mounted) return;
+      String errorMessage = 'Authentication failed';
+      if (e.toString().contains('timeout') || e.toString().contains('Connection timeout')) {
+        errorMessage = 'Connection timeout. Please check:\n1. Backend server is running\n2. Correct API URL configured\n3. Device and server are on same network';
+      } else if (e.toString().contains('Failed host lookup') || e.toString().contains('Cannot connect')) {
+        errorMessage = 'Cannot connect to server. Make sure the backend is running. For physical devices, use your computer\'s IP address instead of localhost.';
+      } else {
+        errorMessage = 'Authentication failed: $e';
+      }
       setState(() {
-        _errorMessage = 'Authentication failed: $e';
+        _errorMessage = errorMessage;
         _isLoading = false;
       });
     }

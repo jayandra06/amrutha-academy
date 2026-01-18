@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'create_course_screen.dart';
+import 'classes_management_screen.dart';
+import 'kit_management_screen.dart';
+import '../courses/course_list_screen.dart';
+import 'trainers_management_screen.dart';
+import 'students_management_screen.dart';
+import '../transactions/transactions_screen.dart';
 import '../../widgets/app_drawer.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -36,7 +42,10 @@ class AdminDashboardScreen extends StatelessWidget {
             Icons.school,
             Colors.green,
             () {
-              // Navigate to courses list
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CourseListScreen()),
+              );
             },
           ),
           _buildDashboardCard(
@@ -45,16 +54,58 @@ class AdminDashboardScreen extends StatelessWidget {
             Icons.person,
             Colors.orange,
             () {
-              // Navigate to trainers
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TrainersManagementScreen()),
+              );
             },
           ),
           _buildDashboardCard(
             context,
-            'View Reports',
-            Icons.assessment,
-            Colors.purple,
+            'Manage Students',
+            Icons.people,
+            Colors.teal,
             () {
-              // Navigate to reports
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StudentsManagementScreen()),
+              );
+            },
+          ),
+          _buildDashboardCard(
+            context,
+            'Payments',
+            Icons.payment,
+            Colors.indigo,
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TransactionsScreen()),
+              );
+            },
+          ),
+          _buildDashboardCard(
+            context,
+            'Classes',
+            Icons.class_,
+            Colors.deepPurple,
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ClassesManagementScreen()),
+              );
+            },
+          ),
+          _buildDashboardCard(
+            context,
+            'Kit Management',
+            Icons.inventory_2,
+            Colors.brown,
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const KitManagementScreen()),
+              );
             },
           ),
         ],

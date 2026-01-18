@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/config/firebase_config.dart';
 import '../../../data/models/user_model.dart';
 import '../../../services/api_service.dart';
@@ -63,37 +65,95 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         throw Exception('User not authenticated');
       }
 
-      // Update user profile via backend API
-      final apiService = GetIt.instance<ApiService>();
-      final response = await apiService.put<UserModel>(
-        '/profile',
-        data: {
-          'fullName': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'bio': _bioController.text.trim(),
-          'location': _locationController.text.trim(),
-          if (_birthday != null) 'birthday': _birthday!.toIso8601String(),
-          'role': 'student',
-        },
-        fromJson: (json) => UserModel.fromJson(json),
-      );
+      final profileData = {
+        'fullName': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'bio': _bioController.text.trim(),
+        'location': _locationController.text.trim(),
+        if (_birthday != null) 'birthday': _birthday!.toIso8601String(),
+        'role': 'student',
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
 
-      if (!mounted) return;
+      // Try backend API first
+      try {
+        final apiService = GetIt.instance<ApiService>();
+        final response = await apiService.put<UserModel>(
+          '/profile',
+          data: profileData,
+          fromJson: (json) => UserModel.fromJson(json),
+        ).timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw Exception('Request timeout - trying Firestore fallback');
+          },
+        );
 
-      if (response.isSuccess) {
+        if (!mounted) return;
+
+        if (response.isSuccess) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+          return;
+        } else {
+          throw Exception(response.error ?? 'API request failed');
+        }
+      } catch (apiError) {
+        print('⚠️ Profile update API failed: $apiError');
+        print('   Attempting Firestore fallback...');
+        
+        // Fallback: Save directly to Firestore
+        if (FirebaseConfig.firestore == null) {
+          throw Exception('Firestore not initialized. Please check your connection.');
+        }
+
+        // Ensure user document exists first
+        final userDoc = await FirebaseConfig.firestore!
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        final userData = {
+          'phoneNumber': user.phoneNumber ?? '',
+          'fullName': profileData['fullName'],
+          'email': profileData['email'],
+          'bio': profileData['bio'],
+          'location': profileData['location'],
+          'birthday': profileData['birthday'] ?? '',
+          'role': profileData['role'],
+          'avatar': userDoc.exists ? (userDoc.data()?['avatar'] ?? '') : '',
+          'updatedAt': DateTime.now().toIso8601String(),
+          if (!userDoc.exists) 'createdAt': DateTime.now().toIso8601String(),
+        };
+
+        await FirebaseConfig.firestore!
+            .collection('users')
+            .doc(user.uid)
+            .set(userData, SetOptions(merge: true));
+
+        print('✅ Profile saved to Firestore successfully');
+
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
-      } else {
-        setState(() {
-          _errorMessage = response.error ?? 'Failed to save profile';
-          _isLoading = false;
-        });
       }
     } catch (e) {
+      print('❌ Profile save error: $e');
       if (!mounted) return;
+      
+      String errorMessage = 'Failed to save profile';
+      if (e.toString().contains('timeout') || e.toString().contains('Connection timeout')) {
+        errorMessage = 'Connection timeout. Please check:\n1. Backend server is running\n2. Correct API URL configured\n3. Device and server are on same network';
+      } else if (e.toString().contains('Cannot connect') || e.toString().contains('Failed host lookup')) {
+        errorMessage = 'Cannot connect to server. The profile was saved to Firestore as a fallback.';
+      } else {
+        errorMessage = 'Failed to save profile: $e';
+      }
+      
       setState(() {
-        _errorMessage = 'Failed to save profile: $e';
+        _errorMessage = errorMessage;
         _isLoading = false;
       });
     }

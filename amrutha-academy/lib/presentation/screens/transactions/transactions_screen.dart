@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../services/api_service.dart';
 import '../../../data/models/api_response.dart';
+import '../../../data/repositories/enrollment_repository.dart';
+import '../../../data/repositories/course_repository.dart';
+import '../../../data/models/enrollment_model.dart';
+import '../../../data/models/course_model.dart';
 import '../../../core/config/di_config.dart';
 import '../../widgets/app_drawer.dart';
 import 'package:get_it/get_it.dart';
@@ -50,7 +54,8 @@ class TransactionsScreen extends StatefulWidget {
 }
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
-  final _apiService = GetIt.instance<ApiService>();
+  final _enrollmentRepository = EnrollmentRepository();
+  final _courseRepository = CourseRepository();
   List<TransactionModel> _transactions = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -62,19 +67,58 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Future<void> _loadTransactions() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      // TODO: Replace with actual API endpoint when available
-      // For now, return empty list
+      // Get enrollments which contain payment information
+      final enrollments = await _enrollmentRepository.getMyEnrollments();
+      
+      // Convert enrollments to transactions
+      final transactions = <TransactionModel>[];
+      for (final enrollment in enrollments) {
+        if (!mounted) return;
+        
+        // Only show enrollments with payment information
+        if (enrollment.paymentId != null && enrollment.paymentId!.isNotEmpty) {
+          // Get course details for the transaction
+          CourseModel? course;
+          try {
+            course = await _courseRepository.getCourseById(enrollment.courseId);
+          } catch (e) {
+            print('Error fetching course for transaction: $e');
+          }
+
+          transactions.add(TransactionModel(
+            id: enrollment.id,
+            orderId: enrollment.paymentId ?? enrollment.id,
+            paymentId: enrollment.paymentId ?? '',
+            amount: course?.price ?? 0.0,
+            status: enrollment.paymentStatus == 'completed' 
+                ? 'completed' 
+                : enrollment.paymentStatus == 'failed' 
+                    ? 'failed' 
+                    : 'pending',
+            createdAt: enrollment.enrolledAt,
+            courseId: enrollment.courseId,
+            courseTitle: course?.title ?? 'Course',
+          ));
+        }
+      }
+
+      // Sort by date (newest first)
+      transactions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      if (!mounted) return;
       setState(() {
-        _transactions = [];
+        _transactions = transactions;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to load transactions: $e';
         _isLoading = false;

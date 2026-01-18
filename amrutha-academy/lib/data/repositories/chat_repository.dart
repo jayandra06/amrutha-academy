@@ -1,28 +1,38 @@
-import '../../../services/api_service.dart';
-import '../models/api_response.dart';
+import '../../core/config/firebase_config.dart';
 import '../models/chat_room_model.dart';
-import '../../core/config/di_config.dart';
-import 'package:get_it/get_it.dart';
 
 class ChatRepository {
-  final ApiService _apiService = GetIt.instance<ApiService>();
-
   Future<List<ChatRoomModel>> getMyChatRooms() async {
     try {
-      final response = await _apiService.get<List<ChatRoomModel>>(
-        '/chat/rooms',
-        fromJson: (json) {
-          if (json is List) {
-            return (json as List).map((item) => ChatRoomModel.fromJson(item as Map<String, dynamic>)).toList();
-          }
-          return [];
-        },
-      );
-
-      if (response.isSuccess && response.data != null) {
-        return response.data!;
+      if (FirebaseConfig.firestore == null) {
+        return [];
       }
-      return [];
+
+      final currentUser = FirebaseConfig.auth?.currentUser;
+      if (currentUser == null) {
+        return [];
+      }
+
+      // Get chat rooms where user is a participant
+      final snapshot = await FirebaseConfig.firestore!
+          .collection('chatRooms')
+          .where('participants', arrayContains: currentUser.uid)
+          .get();
+
+      return snapshot.docs
+          .map((doc) {
+            try {
+              return ChatRoomModel.fromJson({
+                'id': doc.id,
+                ...doc.data(),
+              });
+            } catch (e) {
+              print('Error parsing chat room ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<ChatRoomModel>()
+          .toList();
     } catch (e) {
       print('Error fetching chat rooms: $e');
       return [];
@@ -31,15 +41,29 @@ class ChatRepository {
 
   Future<ChatRoomModel?> getChatRoomById(String roomId) async {
     try {
-      final response = await _apiService.get<Map<String, dynamic>>(
-        '/chat/rooms/$roomId/check-access',
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
+      if (FirebaseConfig.firestore == null) {
+        return null;
+      }
 
-      if (response.isSuccess && response.data != null) {
-        final roomData = response.data!['room'] as Map<String, dynamic>?;
-        if (roomData != null) {
-          return ChatRoomModel.fromJson(roomData);
+      final currentUser = FirebaseConfig.auth?.currentUser;
+      if (currentUser == null) {
+        return null;
+      }
+
+      final doc = await FirebaseConfig.firestore!
+          .collection('chatRooms')
+          .doc(roomId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        // Check if user has access (is a participant)
+        final participants = List<String>.from(data['participants'] ?? []);
+        if (participants.contains(currentUser.uid)) {
+          return ChatRoomModel.fromJson({
+            'id': doc.id,
+            ...data,
+          });
         }
       }
       return null;
@@ -49,4 +73,3 @@ class ChatRepository {
     }
   }
 }
-

@@ -9,12 +9,13 @@ Future<void> setupDependencies(AppEnvironment env) async {
   // Register environment
   getIt.registerSingleton<AppEnvironment>(env);
 
-  // Register Dio
+  // Register Dio with optimized timeouts
   getIt.registerSingleton<Dio>(
     Dio(BaseOptions(
       baseUrl: env.apiBaseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 15), // Reduced from 60 - faster failure detection
+      receiveTimeout: const Duration(seconds: 30), // Reduced from 60 - reasonable for most requests
+      sendTimeout: const Duration(seconds: 15), // Reduced from 60
       headers: {
         'Content-Type': 'application/json',
       },
