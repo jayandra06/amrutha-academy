@@ -42,33 +42,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCnsK2ePZBa_iqXa706_BcIBSP-F0SVv70',
-    appId: '1:349596859394:web:b83502a2998a28129c7b1b',
-    messagingSenderId: '349596859394',
-    projectId: 'amrutha-academy',
-    authDomain: 'amrutha-academy.firebaseapp.com',
-    databaseURL: 'https://amrutha-academy-default-rtdb.firebaseio.com',
-    storageBucket: 'amrutha-academy.firebasestorage.app',
-    measurementId: 'G-5HHW2S8TME',
+    apiKey: 'AIzaSyBGEVaNOr5hqLGZPBf2TBonnEPnG5n_Sw0',
+    appId: '1:960116742735:web:b095cde08c62ce4ab5e83a',
+    messagingSenderId: '960116742735',
+    projectId: 'amrutha-cademy',
+    authDomain: 'amrutha-cademy.firebaseapp.com',
+    storageBucket: 'amrutha-cademy.firebasestorage.app',
+    measurementId: 'G-ES5JMYT86Z',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBQ1x6bwLTxKn3WGHtTc3ClD451JiSuciw',
-    appId: '1:349596859394:android:6e172ff76c49fbe29c7b1b',
-    messagingSenderId: '349596859394',
-    projectId: 'amrutha-academy',
-    databaseURL: 'https://amrutha-academy-default-rtdb.firebaseio.com',
-    storageBucket: 'amrutha-academy.firebasestorage.app',
+    apiKey: 'AIzaSyDziJoGcKBiY0zNXWekbFe6-n4Vz-mDDz8',
+    appId: '1:960116742735:android:1370b4acee718025b5e83a',
+    messagingSenderId: '960116742735',
+    projectId: 'amrutha-cademy',
+    storageBucket: 'amrutha-cademy.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBHrroksyjaAfvVJ-6qd6QuZiU6kuTT5b0',
-    appId: '1:349596859394:ios:1f18528d5d8303879c7b1b',
-    messagingSenderId: '349596859394',
-    projectId: 'amrutha-academy',
-    databaseURL: 'https://amrutha-academy-default-rtdb.firebaseio.com',
-    storageBucket: 'amrutha-academy.firebasestorage.app',
-    iosBundleId: '1',
+    apiKey: 'AIzaSyBlmVr__lgcOI4PvCO8ESc9fF9S3XJHalg',
+    appId: '1:960116742735:ios:885484616b94ac1fb5e83a',
+    messagingSenderId: '960116742735',
+    projectId: 'amrutha-cademy',
+    storageBucket: 'amrutha-cademy.firebasestorage.app',
+    iosBundleId: 'a',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

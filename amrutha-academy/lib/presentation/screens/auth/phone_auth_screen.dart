@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,13 +20,31 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _isLoading = false;
   bool _otpSent = false;
   String? _verificationId;
+  int? _resendToken;
   String? _errorMessage;
+  Timer? _resendTimer;
+  int _resendCooldownSeconds = 60;
 
   @override
   void dispose() {
     _phoneController.dispose();
     _otpController.dispose();
+    _resendTimer?.cancel();
     super.dispose();
+  }
+
+  void _startResendTimer() {
+    _resendCooldownSeconds = 60;
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCooldownSeconds > 0) {
+        setState(() {
+          _resendCooldownSeconds--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   Future<void> _sendOTP() async {
@@ -63,7 +82,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               errorMsg = 'Invalid phone number format. Please check and try again.';
               break;
             case 'too-many-requests':
-              errorMsg = 'Too many requests. Please try again later.';
+              errorMsg = '⚠️ Too many verification attempts\n\nFirebase has temporarily blocked requests from this device due to unusual activity. This is a security measure.\n\nPlease wait 15-30 minutes before trying again.';
               break;
             case 'operation-not-allowed':
               errorMsg = 'Phone authentication is not enabled in Firebase Console.';
@@ -73,6 +92,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               break;
             case 'missing-phone-number':
               errorMsg = 'Phone number is required.';
+              break;
+            case 'invalid-app-credential':
+              errorMsg = 'App not registered. Please add SHA-1/SHA-256 fingerprints to Firebase Console.\n\nRun: keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android\n\nThen add the SHA-1 and SHA-256 to Firebase Console → Project Settings → Your Android app.';
               break;
             default:
               errorMsg = e.message ?? 'Failed to send OTP. Error: ${e.code}';
@@ -87,9 +109,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           print('✅ OTP code sent successfully. Verification ID received.');
           setState(() {
             _verificationId = verificationId;
+            _resendToken = resendToken;
             _otpSent = true;
             _isLoading = false;
           });
+          _startResendTimer();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('OTP sent successfully! Please check your phone.'),
@@ -108,6 +132,78 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to send OTP: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _resendOTP() async {
+    if (_resendCooldownSeconds > 0) {
+      return; // Still in cooldown
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _otpController.clear();
+    });
+
+    try {
+      final phoneNumber = _phoneController.text.trim();
+      String formattedPhone = phoneNumber;
+      if (!phoneNumber.startsWith('+')) {
+        formattedPhone = '+91$phoneNumber';
+      }
+
+      print('📱 Resending OTP to: $formattedPhone');
+
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: formattedPhone,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          print('✅ Phone verification auto-completed (resend)');
+          await _signInWithCredential(credential);
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          print('❌ Phone verification failed (resend): ${e.code} - ${e.message}');
+          String errorMsg = 'Failed to resend OTP';
+          
+          switch (e.code) {
+            case 'too-many-requests':
+              errorMsg = '⚠️ Too many verification attempts\n\nFirebase has temporarily blocked requests from this device due to unusual activity. This is a security measure.\n\nPlease wait 15-30 minutes before trying again.';
+              break;
+            default:
+              errorMsg = e.message ?? 'Failed to resend OTP. Error: ${e.code}';
+          }
+          
+          setState(() {
+            _errorMessage = errorMsg;
+            _isLoading = false;
+          });
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          print('✅ OTP resent successfully.');
+          setState(() {
+            _verificationId = verificationId;
+            _resendToken = resendToken;
+            _isLoading = false;
+          });
+          _startResendTimer();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('OTP resent successfully! Please check your phone.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
+        forceResendingToken: _resendToken,
+      );
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to resend OTP: $e';
         _isLoading = false;
       });
     }
@@ -403,24 +499,56 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                         : const Text('Verify OTP'),
                   ),
                   const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _otpSent = false;
-                        _otpController.clear();
-                      });
-                    },
-                    child: const Text('Change Phone Number'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          _resendTimer?.cancel();
+                          setState(() {
+                            _otpSent = false;
+                            _otpController.clear();
+                            _resendCooldownSeconds = 0;
+                          });
+                        },
+                        child: const Text('Change Phone Number'),
+                      ),
+                      TextButton(
+                        onPressed: (_resendCooldownSeconds > 0 || _isLoading) 
+                            ? null 
+                            : _resendOTP,
+                        child: _resendCooldownSeconds > 0
+                            ? Text(
+                                'Resend OTP (${_resendCooldownSeconds}s)',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.38),
+                                ),
+                              )
+                            : const Text('Resend OTP'),
+                      ),
+                    ],
                   ),
                 ],
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.error,
+                        width: 1,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                        fontSize: 13,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ],
                 ],

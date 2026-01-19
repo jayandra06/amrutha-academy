@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../firebase_options.dart';
 
 class FirebaseConfig {
@@ -27,6 +28,17 @@ class FirebaseConfig {
       database = FirebaseDatabase.instance;
       storage = FirebaseStorage.instance;
       messaging = FirebaseMessaging.instance;
+
+      // Configure service worker for web platform
+      if (kIsWeb) {
+        try {
+          // Set up the service worker for Firebase Cloud Messaging
+          // The service worker file should be at web/firebase-messaging-sw.js
+          await messaging!.setAutoInitEnabled(true);
+        } catch (e) {
+          print('Warning: Could not configure FCM service worker: $e');
+        }
+      }
 
       // Request notification permissions
       try {

@@ -1,14 +1,13 @@
 {
   "project_info": {
-    "project_number": "349596859394",
-    "firebase_url": "https://amrutha-academy-default-rtdb.firebaseio.com",
-    "project_id": "amrutha-academy",
-    "storage_bucket": "amrutha-academy.firebasestorage.app"
+    "project_number": "960116742735",
+    "project_id": "amrutha-cademy",
+    "storage_bucket": "amrutha-cademy.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:349596859394:android:6e172ff76c49fbe29c7b1b",
+        "mobilesdk_app_id": "1:960116742735:android:1370b4acee718025b5e83a",
         "android_client_info": {
           "package_name": "com.amruthaacademy.amrutha_academy"
         }
@@ -16,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBQ1x6bwLTxKn3WGHtTc3ClD451JiSuciw"
+          "current_key": "AIzaSyDziJoGcKBiY0zNXWekbFe6-n4Vz-mDDz8"
         }
       ],
       "services": {
